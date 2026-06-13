@@ -1,0 +1,30 @@
+# Build output
+/build/
+/build-*/
+
+# Qt Creator user-specific files
+*.pro.user
+*.pro.user.*
+*.qmlproject.user
+*.qmlproject.user.*
+*.autosave
+
+# Qt/qmake generated files
+.qmake.stash
+.qtc_clangd/
+Makefile
+Makefile.*
+*.o
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+*.app/
+
+# Editor metadata
+/.idea/
+/.vscode/
+*.swp
+*~
+
+# macOS
+.DS_Store

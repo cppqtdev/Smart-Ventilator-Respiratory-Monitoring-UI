@@ -1,0 +1,32 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>qml/styles/qmldir</file>
+        <file>qml/styles/Colors.qml</file>
+        <file>qml/styles/Spacing.qml</file>
+        <file>qml/styles/Radius.qml</file>
+        <file>qml/styles/Typography.qml</file>
+        <file>qml/components/navigation/BottomNavigation.qml</file>
+        <file>qml/components/indicators/AppHeader.qml</file>
+        <file>qml/components/indicators/AlarmBanner.qml</file>
+        <file>qml/components/cards/StatusPanel.qml</file>
+        <file>qml/components/cards/Panel.qml</file>
+        <file>qml/components/cards/MetricTile.qml</file>
+        <file>qml/components/cards/ModeCard.qml</file>
+        <file>qml/components/buttons/PrimaryButton.qml</file>
+        <file>qml/components/charts/CircularKnob.qml</file>
+        <file>qml/components/charts/WaveformChart.qml</file>
+        <file>qml/components/charts/TrendChart.qml</file>
+        <file>qml/screens/StandbyScreen.qml</file>
+        <file>qml/screens/SplashScreen.qml</file>
+        <file>qml/screens/PatientSetupScreen.qml</file>
+        <file>qml/screens/ModeSelectionScreen.qml</file>
+        <file>qml/screens/MonitoringScreen.qml</file>
+        <file>qml/screens/ControlsScreen.qml</file>
+        <file>qml/screens/AlarmCenterScreen.qml</file>
+        <file>qml/screens/SystemDiagnosticsScreen.qml</file>
+        <file>qml/screens/EventsScreen.qml</file>
+        <file>qml/screens/ToolsScreen.qml</file>
+        <file>qml/screens/LayoutScreen.qml</file>
+    </qresource>
+</RCC>
