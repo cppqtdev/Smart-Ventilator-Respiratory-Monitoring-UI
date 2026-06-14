@@ -4,6 +4,7 @@
 #include <QSqlDatabase>
 #include <QString>
 #include <QVariantMap>
+#include <QCryptographicHash>
 
 /**
  * @brief Owns the application SQLite database connection and schema lifecycle.
@@ -17,6 +18,7 @@
 class DatabaseManager : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QString lastError READ lastError NOTIFY errorOccurred)
 
 public:
     explicit DatabaseManager(QObject *parent = nullptr);
@@ -57,12 +59,39 @@ public:
     void saveParameterSnapshot(const QVariantMap &snapshot);
 
     /**
+     * @brief Saves or updates a patient profile in the database.
+     * @param profile  Key-value map with category, gender, age, height, weight, ibw.
+     */
+    void savePatientProfile(const QVariantMap &profile);
+
+    /**
+     * @brief Loads the most recent patient profile from the database.
+     * @return Key-value map with patient fields, or empty map if none exists.
+     */
+    QVariantMap loadLastPatientProfile();
+
+    /**
      * @brief Returns the absolute SQLite database path.
      */
     Q_INVOKABLE QString databasePath() const;
 
+    /** @return Most recent database error message, empty if no error. */
+    QString lastError() const;
+
+    /**
+     * @brief Verifies the SHA-256 hash chain integrity of the events table.
+     * @return true if all event hashes are valid and unbroken.
+     */
+    Q_INVOKABLE bool verifyAuditTrail();
+
+signals:
+    /** @brief Emitted when a database write operation fails. */
+    void errorOccurred(const QString &message);
+
 private:
+    void setError(const QString &message);
     bool executeSchema();
     QString m_databasePath;
+    QString m_lastError;
     QSqlDatabase m_database;
 };

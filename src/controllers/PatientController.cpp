@@ -1,10 +1,13 @@
 #include "PatientController.h"
+#include "../core/DatabaseManager.h"
 
 #include <QtMath>
 
-PatientController::PatientController(QObject *parent)
+PatientController::PatientController(DatabaseManager *database, QObject *parent)
     : QObject(parent)
+    , m_database(database)
 {
+    loadProfile();
 }
 
 QString PatientController::category() const { return m_category; }
@@ -82,5 +85,37 @@ void PatientController::setWeight(int value)
     if (m_weight == value)
         return;
     m_weight = value;
+    emit patientChanged();
+}
+
+void PatientController::saveProfile()
+{
+    if (!m_database)
+        return;
+
+    m_database->savePatientProfile({
+        { QStringLiteral("category"), m_category },
+        { QStringLiteral("gender"),   m_gender },
+        { QStringLiteral("age"),      m_age },
+        { QStringLiteral("height"),   m_height },
+        { QStringLiteral("weight"),   m_weight },
+        { QStringLiteral("ibw"),      ibw() }
+    });
+}
+
+void PatientController::loadProfile()
+{
+    if (!m_database)
+        return;
+
+    const QVariantMap profile = m_database->loadLastPatientProfile();
+    if (profile.isEmpty())
+        return;
+
+    m_category = profile.value(QStringLiteral("category"), m_category).toString();
+    m_gender   = profile.value(QStringLiteral("gender"), m_gender).toString();
+    m_age      = profile.value(QStringLiteral("age"), m_age).toInt();
+    m_height   = profile.value(QStringLiteral("height"), m_height).toInt();
+    m_weight   = profile.value(QStringLiteral("weight"), m_weight).toInt();
     emit patientChanged();
 }

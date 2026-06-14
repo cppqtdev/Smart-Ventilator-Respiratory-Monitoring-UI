@@ -28,12 +28,15 @@ ApplicationWindow {
     property var ventilatorModel: ventilatorController
     property var alarmModel: alarmController
     property var eventModel: eventController
-    property string currentScreen: "standby"
+    property string currentScreen: "login"
+    property string operatorRole: ""
     property bool ventilationActive: ventilatorModel.running
     property bool alarmVisible: alarmModel.active
     property bool splashActive: true
 
     function navigateToScreen() {
+        if (root.currentScreen === "login")
+            return loginScreen
         if (root.currentScreen === "standby")
             return standbyScreen
         if (root.currentScreen === "patient")
@@ -61,7 +64,7 @@ ApplicationWindow {
 
     header: AppHeader {
         id: header
-        visible: !root.splashActive
+        visible: !root.splashActive && root.currentScreen !== "login"
         alarmData: alarmModel
         clockData: clockController
         showAlarm: root.alarmVisible
@@ -84,7 +87,7 @@ ApplicationWindow {
 
     footer: BottomNavigation {
         id: bottomNav
-        visible: !root.splashActive
+        visible: !root.splashActive && root.currentScreen !== "login"
         padding: Spacing.screenMargin
         currentScreen: root.currentScreen
         onNavigate: function(screen) {
@@ -100,6 +103,33 @@ ApplicationWindow {
         softwareVersion: appSettings.softwareVersion
         operatingHours: appSettings.operatingHours
         onFinished: root.splashActive = false
+    }
+
+    // Global interaction detector to reset the screen lock timer.
+    MouseArea {
+        anchors.fill: parent
+        z: 999
+        propagateComposedEvents: true
+        onPressed: function(mouse) {
+            screenLock.resetTimer()
+            mouse.accepted = false
+        }
+    }
+
+    ScreenLockOverlay {
+        id: screenLock
+        anchors.fill: parent
+        timeoutSeconds: 300
+    }
+
+    Component {
+        id: loginScreen
+        LoginScreen {
+            onLoginAccepted: function(role) {
+                root.operatorRole = role
+                root.currentScreen = "standby"
+            }
+        }
     }
 
     Component {

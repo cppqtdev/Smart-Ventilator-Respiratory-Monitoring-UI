@@ -33,7 +33,7 @@ bool DatabaseManager::initialize()
 
     m_database.setDatabaseName(m_databasePath);
     if (!m_database.open()) {
-        qWarning() << "Unable to open SQLite database:" << m_database.lastError().text();
+        setError(QStringLiteral("Unable to open database: ") + m_database.lastError().text());
         return false;
     }
 
@@ -45,6 +45,18 @@ QString DatabaseManager::databasePath() const
     return m_databasePath;
 }
 
+QString DatabaseManager::lastError() const
+{
+    return m_lastError;
+}
+
+void DatabaseManager::setError(const QString &message)
+{
+    m_lastError = message;
+    qWarning() << "DatabaseManager:" << message;
+    emit errorOccurred(message);
+}
+
 bool DatabaseManager::executeSchema()
 {
     static const char *schema[] = {
@@ -53,7 +65,8 @@ bool DatabaseManager::executeSchema()
         "created_at TEXT NOT NULL,"
         "source TEXT NOT NULL,"
         "description TEXT NOT NULL,"
-        "status TEXT NOT NULL)",
+        "status TEXT NOT NULL,"
+        "hash TEXT NOT NULL DEFAULT '')",
         "CREATE TABLE IF NOT EXISTS alarms ("
         "id INTEGER PRIMARY KEY AUTOINCREMENT,"
         "created_at TEXT NOT NULL,"
@@ -92,7 +105,7 @@ bool DatabaseManager::executeSchema()
     for (const char *statement : schema) {
         QSqlQuery query(m_database);
         if (!query.exec(QString::fromUtf8(statement))) {
-            qWarning() << "SQLite schema error:" << query.lastError().text();
+            setError(QStringLiteral("Schema error: ") + query.lastError().text());
             return false;
         }
     }
@@ -105,15 +118,34 @@ void DatabaseManager::logEvent(const QString &source, const QString &description
     if (!m_database.isOpen())
         return;
 
+    const QString timestamp = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+
+    // Retrieve the hash of the previous event for chain integrity.
+    QString previousHash;
+    {
+        QSqlQuery prev(m_database);
+        if (prev.exec(QStringLiteral("SELECT hash FROM events ORDER BY id DESC LIMIT 1"))
+            && prev.next()) {
+            previousHash = prev.value(0).toString();
+        }
+    }
+
+    // Compute SHA-256 hash: H(previousHash + timestamp + source + description + status)
+    const QString payload = previousHash + timestamp + source + description + status;
+    const QByteArray hash = QCryptographicHash::hash(
+        payload.toUtf8(), QCryptographicHash::Sha256).toHex();
+
     QSqlQuery query(m_database);
     query.prepare(QStringLiteral(
-        "INSERT INTO events(created_at, source, description, status) VALUES(?, ?, ?, ?)"));
-    query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+        "INSERT INTO events(created_at, source, description, status, hash) "
+        "VALUES(?, ?, ?, ?, ?)"));
+    query.addBindValue(timestamp);
     query.addBindValue(source);
     query.addBindValue(description);
     query.addBindValue(status);
+    query.addBindValue(QString::fromLatin1(hash));
     if (!query.exec())
-        qWarning() << "Unable to insert event:" << query.lastError().text();
+        setError(QStringLiteral("Unable to insert event: ") + query.lastError().text());
 }
 
 void DatabaseManager::logAlarm(const QString &priority,
@@ -133,7 +165,7 @@ void DatabaseManager::logAlarm(const QString &priority,
     query.addBindValue(description);
     query.addBindValue(status);
     if (!query.exec())
-        qWarning() << "Unable to insert alarm:" << query.lastError().text();
+        setError(QStringLiteral("Unable to insert alarm: ") + query.lastError().text());
 }
 
 void DatabaseManager::saveParameterSnapshot(const QVariantMap &snapshot)
@@ -162,5 +194,94 @@ void DatabaseManager::saveParameterSnapshot(const QVariantMap &snapshot)
     query.addBindValue(snapshot.value(QStringLiteral("compliance")));
     query.addBindValue(snapshot.value(QStringLiteral("resistance")));
     if (!query.exec())
-        qWarning() << "Unable to insert parameter snapshot:" << query.lastError().text();
+        setError(QStringLiteral("Unable to insert snapshot: ") + query.lastError().text());
+}
+
+void DatabaseManager::savePatientProfile(const QVariantMap &profile)
+{
+    if (!m_database.isOpen())
+        return;
+
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "INSERT INTO patient_profiles(created_at, category, gender, age, height, weight, ibw) "
+        "VALUES(?, ?, ?, ?, ?, ?, ?)"));
+    query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+    query.addBindValue(profile.value(QStringLiteral("category")));
+    query.addBindValue(profile.value(QStringLiteral("gender")));
+    query.addBindValue(profile.value(QStringLiteral("age")));
+    query.addBindValue(profile.value(QStringLiteral("height")));
+    query.addBindValue(profile.value(QStringLiteral("weight")));
+    query.addBindValue(profile.value(QStringLiteral("ibw")));
+    if (!query.exec())
+        setError(QStringLiteral("Unable to save patient profile: ") + query.lastError().text());
+}
+
+QVariantMap DatabaseManager::loadLastPatientProfile()
+{
+    if (!m_database.isOpen())
+        return {};
+
+    QSqlQuery query(m_database);
+    if (!query.exec(QStringLiteral(
+            "SELECT category, gender, age, height, weight FROM patient_profiles "
+            "ORDER BY id DESC LIMIT 1"))) {
+        setError(QStringLiteral("Unable to load patient profile: ") + query.lastError().text());
+        return {};
+    }
+
+    if (!query.next())
+        return {};
+
+    return {
+        { QStringLiteral("category"), query.value(0).toString() },
+        { QStringLiteral("gender"),   query.value(1).toString() },
+        { QStringLiteral("age"),      query.value(2).toInt() },
+        { QStringLiteral("height"),   query.value(3).toInt() },
+        { QStringLiteral("weight"),   query.value(4).toInt() }
+    };
+}
+
+bool DatabaseManager::verifyAuditTrail()
+{
+    if (!m_database.isOpen())
+        return false;
+
+    QSqlQuery query(m_database);
+    if (!query.exec(QStringLiteral(
+            "SELECT created_at, source, description, status, hash "
+            "FROM events ORDER BY id ASC"))) {
+        setError(QStringLiteral("Audit verification failed: ") + query.lastError().text());
+        return false;
+    }
+
+    QString previousHash;
+    int row = 0;
+    while (query.next()) {
+        ++row;
+        const QString timestamp   = query.value(0).toString();
+        const QString source      = query.value(1).toString();
+        const QString description = query.value(2).toString();
+        const QString status      = query.value(3).toString();
+        const QString storedHash  = query.value(4).toString();
+
+        // Skip legacy records that predate hash chain (empty hash field).
+        if (storedHash.isEmpty()) {
+            previousHash.clear();
+            continue;
+        }
+
+        const QString payload = previousHash + timestamp + source + description + status;
+        const QByteArray expected = QCryptographicHash::hash(
+            payload.toUtf8(), QCryptographicHash::Sha256).toHex();
+
+        if (QString::fromLatin1(expected) != storedHash) {
+            setError(QStringLiteral("Audit trail integrity failure at event row %1").arg(row));
+            return false;
+        }
+
+        previousHash = storedHash;
+    }
+
+    return true;
 }

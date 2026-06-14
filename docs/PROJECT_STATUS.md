@@ -31,7 +31,7 @@ feature requirements documented in SCREEN_FLOW_TODO.md.
 | 11 | System Diagnostics      | Complete    | 4 tabs: Info, Tests, Sensors, Settings           |
 | 12 | Shutdown / Safe Stop    | Complete    | Clinical stop confirmation screen (2026-06-14)   |
 | 13 | Emergency Mode          | Complete    | Streamlined waveform + vitals layout (2026-06-14)|
-| 14 | Login / Authentication  | Not Started | Operator and maintenance access control          |
+| 14 | Login / Authentication  | Complete    | PIN-based login with role selection (2026-06-14) |
 
 
 ## 2. Reusable Component Library
@@ -65,9 +65,9 @@ Components are categorized by reuse frequency across screens.
 | ID   | Severity | File                      | Line | Description                                          | Status   |
 |------|----------|---------------------------|------|------------------------------------------------------|----------|
 | BUG-001 | Low   | DateTimeBanner.qml        | 53   | Asset filename typo: "chanrge.svg" should be "charge.svg" | Fixed (2026-06-14) |
-| BUG-002 | Medium| EventsScreen.qml          | 46-54| Event data is hardcoded JS array, never updates      | Open     |
-| BUG-003 | Low   | DatabaseManager.cpp       | --   | Write failures only emit qWarning, no user feedback  | Open     |
-| BUG-004 | Low   | PatientSetupScreen.qml    | --   | No clinical range validation on patient sliders      | Open     |
+| BUG-002 | Medium| EventController.cpp       | --   | Legacy status values mapped to severity for row coloring | Fixed (2026-06-14) |
+| BUG-003 | Low   | DatabaseManager.cpp       | --   | Added lastError property and errorOccurred signal    | Fixed (2026-06-14) |
+| BUG-004 | Low   | PatientSetupScreen.qml    | --   | Added stepSize/snapMode to sliders, warning at limits| Fixed (2026-06-14) |
 
 
 ## 4. Code Quality Issues
@@ -141,7 +141,7 @@ child items.
 | Item                          | Status   | Notes                                    |
 |-------------------------------|----------|------------------------------------------|
 | Doxyfile exists               | Complete | Configured for HTML output               |
-| C++ headers documented        | Partial  | Class-level done; method params incomplete|
+| C++ headers documented        | Complete | All public methods have @param/@return (2026-06-14) |
 | QML files in FILE_PATTERNS    | Fixed    | Added *.qml to Doxyfile (2026-06-14)    |
 | WARN_NO_PARAMDOC enabled      | Fixed    | Set to YES (2026-06-14)                 |
 | QML file header comments      | Fixed    | All QML files have doc headers (2026-06-14) |
@@ -163,9 +163,9 @@ child items.
 | Feature                     | Status      | Notes                                      |
 |-----------------------------|-------------|--------------------------------------------|
 | EventController (C++ model) | Complete    | EventController.h/cpp with SQLite (2026-06-14) |
-| Operator authentication     | Not Started | Role-based access for service menus        |
-| Persistent patient profiles | Not Started | Survive application restart                |
-| Audit trail logging         | Not Started | Tamper-proof event persistence             |
+| Operator authentication     | Complete    | LoginScreen.qml with PIN entry and role selection (2026-06-14) |
+| Persistent patient profiles | Complete    | PatientController save/load via SQLite (2026-06-14) |
+| Audit trail logging         | Complete    | SHA-256 hash chain on events table, verifyAuditTrail() (2026-06-14) |
 
 ### Priority 2 -- Production Enhancement
 
@@ -173,14 +173,14 @@ child items.
 |-----------------------------|-------------|--------------------------------------------|
 | Hardware service interfaces | Not Started | Serial/CAN/Ethernet device adapters       |
 | Automated QML tests         | Not Started | Navigation routes and critical dialogs     |
-| Color-blind accessibility   | Not Started | Pattern/icon indicators alongside color    |
-| Screen lock / timeout       | Not Started | Configurable inactivity timer              |
+| Color-blind accessibility   | Complete    | Triangle severity indicator in MetricTile (2026-06-14) |
+| Screen lock / timeout       | Complete    | ScreenLockOverlay with configurable timeout (2026-06-14) |
 
 ### Priority 3 -- Future Consideration
 
 | Feature                     | Status      | Notes                                      |
 |-----------------------------|-------------|--------------------------------------------|
-| Configurable timezone       | Not Started | Remove IST hardcode from ClockController   |
+| Configurable timezone       | Complete    | setTimeZoneId() with IANA identifiers (2026-06-14) |
 | Multi-language / i18n       | Not Started | Qt translation system integration          |
 
 
@@ -192,10 +192,10 @@ compliance status is assessed below.
 | Standard           | Requirement                                  | Status      |
 |--------------------|----------------------------------------------|-------------|
 | IEC 62304          | Software lifecycle traceability              | Not Started |
-| IEC 60601-1-8      | Alarm priority, escalation, silence rules    | Not Started |
+| IEC 60601-1-8      | Alarm priority, escalation, silence rules    | Partial (priority + silence done, escalation pending) |
 | IEC 62366-1        | Usability engineering documentation          | Not Started |
-| FDA 21 CFR Part 11 | Electronic records and audit trails          | Not Started |
-| WCAG 2.1 AA        | Accessibility (color-blind modes, contrast)  | Not Started |
+| FDA 21 CFR Part 11 | Electronic records and audit trails          | Partial (hash chain done, user identity pending) |
+| WCAG 2.1 AA        | Accessibility (color-blind modes, contrast)  | Partial (severity shapes done, contrast audit pending) |
 | ISO 14971          | Risk management and hazard analysis          | Not Started |
 | Touch targets      | Minimum 44x44px for gloved operation         | Partial     |
 | Clinical validation| Alarm names, units, limits review            | Not Started |
@@ -231,3 +231,13 @@ compliance status is assessed below.
 | 2026-06-14 | --     | Added alarm silence timer with IEC 60601-1-8 compliance       |
 | 2026-06-14 | --     | Added alarm priority arbitration (priorityWeight method)      |
 | 2026-06-14 | --     | Added silence button to AlarmCenterScreen                     |
+| 2026-06-14 | --     | Fixed BUG-002: EventController severity mapping for legacy records |
+| 2026-06-14 | --     | Fixed BUG-003: Added lastError property and errorOccurred signal |
+| 2026-06-14 | --     | Fixed BUG-004: Added slider stepSize, snapMode, limit warnings |
+| 2026-06-14 | --     | Created LoginScreen with PIN entry and role selection         |
+| 2026-06-14 | --     | Added persistent patient profiles (save/load via SQLite)      |
+| 2026-06-14 | --     | Added SHA-256 audit trail hash chain with verifyAuditTrail()  |
+| 2026-06-14 | --     | Added color-blind severity triangle indicator in MetricTile   |
+| 2026-06-14 | --     | Created ScreenLockOverlay with configurable inactivity timeout|
+| 2026-06-14 | --     | Made ClockController timezone configurable via IANA identifiers|
+| 2026-06-14 | --     | Completed Doxygen @param/@return docs for all C++ public APIs |

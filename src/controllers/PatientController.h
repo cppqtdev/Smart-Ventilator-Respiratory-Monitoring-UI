@@ -1,6 +1,9 @@
 #pragma once
 
 #include <QObject>
+#include <QVariantMap>
+
+class DatabaseManager;
 
 /**
  * @brief Stores editable patient demographics and derived clinical suggestions.
@@ -24,30 +27,53 @@ class PatientController : public QObject
     Q_PROPERTY(int recommendedRate READ recommendedRate NOTIFY patientChanged)
 
 public:
-    explicit PatientController(QObject *parent = nullptr);
+    explicit PatientController(DatabaseManager *database = nullptr,
+                               QObject *parent = nullptr);
 
+    /** @brief Saves the current patient profile to the database. */
+    Q_INVOKABLE void saveProfile();
+
+    /** @brief Loads the most recent patient profile from the database. */
+    Q_INVOKABLE void loadProfile();
+
+    /** @return Patient category (e.g. "Adult", "Pediatric"). */
     QString category() const;
+    /** @return Patient profile name or label. */
     QString profile() const;
+    /** @return Patient gender (e.g. "Male", "Female"). */
     QString gender() const;
+    /** @return Patient age in years. */
     int age() const;
+    /** @return Patient height in centimeters. */
     int height() const;
+    /** @return Patient weight in kilograms. */
     int weight() const;
+    /** @return Ideal body weight in kilograms. */
     int ibw() const;
+    /** @return Recommended tidal volume in mL based on IBW. */
     int recommendedVt() const;
+    /** @return Recommended respiratory rate in breaths per minute. */
     int recommendedRate() const;
 
 public slots:
+    /** @param value Patient category to set (e.g. "Adult", "Pediatric"). */
     void setCategory(const QString &value);
+    /** @param value Patient profile name or label. */
     void setProfile(const QString &value);
+    /** @param value Patient gender (e.g. "Male", "Female"). */
     void setGender(const QString &value);
+    /** @param value Patient age in years. */
     void setAge(int value);
+    /** @param value Patient height in centimeters. */
     void setHeight(int value);
+    /** @param value Patient weight in kilograms. */
     void setWeight(int value);
 
 signals:
     void patientChanged();
 
 private:
+    DatabaseManager *m_database = nullptr;
     QString m_category = QStringLiteral("Adult");
     QString m_profile = QStringLiteral("Recent patient");
     QString m_gender = QStringLiteral("Male");

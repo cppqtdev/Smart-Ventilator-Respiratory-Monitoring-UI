@@ -15,9 +15,34 @@ Panel {
     color: state === "critical" ? Colors.critical : Colors.surface
     clip: true
 
+    // Accessibility: shape indicator alongside color for color-blind users.
+    // Triangle for critical, no shape for normal.
+    Canvas {
+        id: severityIndicator
+        visible: root.state === "critical"
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.leftMargin: 8
+        anchors.topMargin: 8
+        width: 18
+        height: 18
+        onPaint: {
+            var ctx = getContext("2d")
+            ctx.clearRect(0, 0, width, height)
+            ctx.fillStyle = Colors.textPrimary.toString()
+            ctx.beginPath()
+            ctx.moveTo(width / 2, 0)
+            ctx.lineTo(width, height)
+            ctx.lineTo(0, height)
+            ctx.closePath()
+            ctx.fill()
+        }
+    }
+
     Text {
         id: labelText
-        anchors.left: parent.left
+        anchors.left: severityIndicator.visible
+            ? severityIndicator.right : parent.left
         anchors.right: valueText.left
         anchors.top: parent.top
         anchors.leftMargin: 18

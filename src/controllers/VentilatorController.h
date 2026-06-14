@@ -43,47 +43,87 @@ class VentilatorController : public QObject
     Q_PROPERTY(QVariantList co2Waveform READ co2Waveform NOTIFY waveformChanged)
 
 public:
+    /**
+     * @param database Pointer to the application database manager.
+     * @param alarmController Pointer to the alarm controller for threshold evaluation.
+     * @param parent Optional parent QObject for ownership.
+     */
     explicit VentilatorController(DatabaseManager *database,
                                   AlarmController *alarmController,
                                   QObject *parent = nullptr);
 
+    /** @return True if the ventilator simulation is actively running. */
     bool running() const;
+    /** @return True if waveform display is frozen. */
     bool frozen() const;
+    /** @return Current ventilation mode identifier (e.g. "ASV", "PCV"). */
     QString mode() const;
+    /** @return Fraction of inspired oxygen setpoint in percent. */
     int fio2() const;
+    /** @return Positive end-expiratory pressure setpoint in cmH2O. */
     int peep() const;
+    /** @return Pressure support setpoint in cmH2O. */
     int pressureSupport() const;
+    /** @return Inspiratory time setpoint in seconds. */
     int inspiratoryTime() const;
+    /** @return Respiratory rate setpoint in breaths per minute. */
     int respiratoryRate() const;
+    /** @return Flow trigger sensitivity setpoint in L/min. */
     int trigger() const;
+    /** @return Minute volume setpoint in mL/min. */
     int minuteVolume() const;
+    /** @return Tidal volume setpoint in mL. */
     int tidalVolume() const;
+    /** @return Measured peak airway pressure in cmH2O. */
     double ppeak() const;
+    /** @return Measured plateau airway pressure in cmH2O. */
     double pplat() const;
+    /** @return Measured mean airway pressure in cmH2O. */
     double pmean() const;
+    /** @return Measured peripheral oxygen saturation in percent. */
     double spo2() const;
+    /** @return Measured end-tidal CO2 in mmHg. */
     double etco2() const;
+    /** @return Measured lung compliance in mL/cmH2O. */
     double compliance() const;
+    /** @return Measured airway resistance in cmH2O/(L/s). */
     double resistance() const;
+    /** @return Rolling pressure waveform sample buffer. */
     QVariantList pressureWaveform() const;
+    /** @return Rolling flow waveform sample buffer. */
     QVariantList flowWaveform() const;
+    /** @return Rolling volume waveform sample buffer. */
     QVariantList volumeWaveform() const;
+    /** @return Rolling CO2 waveform sample buffer. */
     QVariantList co2Waveform() const;
 
+    /** @brief Starts the ventilator simulation loop. */
     Q_INVOKABLE void startVentilation();
+    /** @brief Stops the ventilator simulation loop. */
     Q_INVOKABLE void stopVentilation();
+    /** @brief Toggles waveform freeze on or off. */
     Q_INVOKABLE void toggleFreeze();
+    /** @brief Runs a simulated sensor calibration sequence. */
     Q_INVOKABLE void runCalibration();
 
 public slots:
+    /** @param value Ventilation mode identifier to apply. */
     void setMode(const QString &value);
+    /** @param value FiO2 setpoint in percent. */
     void setFio2(int value);
+    /** @param value PEEP setpoint in cmH2O. */
     void setPeep(int value);
+    /** @param value Pressure support setpoint in cmH2O. */
     void setPressureSupport(int value);
+    /** @param value Inspiratory time setpoint in seconds. */
     void setInspiratoryTime(int value);
+    /** @param value Respiratory rate setpoint in breaths per minute. */
     void setRespiratoryRate(int value);
+    /** @param value Flow trigger sensitivity in L/min. */
     void setTrigger(int value);
+    /** @param value Minute volume setpoint in mL/min. */
     void setMinuteVolume(int value);
+    /** @param value Tidal volume setpoint in mL. */
     void setTidalVolume(int value);
 
 signals:

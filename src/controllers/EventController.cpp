@@ -92,11 +92,19 @@ void EventController::loadFromDatabase()
             ? dt.toLocalTime().toString(QStringLiteral("HH:mm:ss"))
             : query.value(0).toString();
 
+        // Map legacy status values to severity for row coloring.
+        // Old records may store "Recorded", "Active", "Passed", etc.
+        QString severity = query.value(3).toString().toLower();
+        if (severity != QStringLiteral("critical")
+            && severity != QStringLiteral("warning")) {
+            severity = QStringLiteral("normal");
+        }
+
         m_rows.append({
             timeStr,
             query.value(1).toString(),
             query.value(2).toString(),
-            query.value(3).toString()
+            severity
         });
     }
 }

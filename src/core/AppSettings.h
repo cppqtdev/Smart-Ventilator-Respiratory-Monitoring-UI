@@ -21,16 +21,25 @@ class AppSettings : public QObject
 public:
     explicit AppSettings(QObject *parent = nullptr);
 
+    /** @return Application software version string. */
     QString softwareVersion() const;
+    /** @return Accumulated device operating hours. */
     double operatingHours() const;
+    /** @return Display brightness level (0-100). */
     int brightness() const;
+    /** @return Audio volume level (0-100). */
     int audioVolume() const;
+    /** @return Current UI language identifier. */
     QString language() const;
 
 public slots:
+    /** @param hours Accumulated operating hours to store. */
     void setOperatingHours(double hours);
+    /** @param value Display brightness level (0-100). */
     void setBrightness(int value);
+    /** @param value Audio volume level (0-100). */
     void setAudioVolume(int value);
+    /** @param value UI language identifier to apply. */
     void setLanguage(const QString &value);
 
 signals:

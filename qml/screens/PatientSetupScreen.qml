@@ -58,14 +58,19 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             from: sliderRow.modelData.min
                             to: sliderRow.modelData.max
+                            stepSize: 1
+                            snapMode: Slider.SnapAlways
                             value: root.patientData[sliderRow.modelData.prop]
                             onMoved: root.patientData[sliderRow.modelData.prop] = Math.round(value)
                         }
                         Text {
+                            property int currentVal: root.patientData[sliderRow.modelData.prop]
+                            property bool atLimit: currentVal <= sliderRow.modelData.min
+                                || currentVal >= sliderRow.modelData.max
                             width: 210
                             anchors.verticalCenter: parent.verticalCenter
-                            text: root.patientData[sliderRow.modelData.prop] + " " + sliderRow.modelData.unit
-                            color: Colors.textPrimary
+                            text: currentVal + " " + sliderRow.modelData.unit
+                            color: atLimit ? Colors.warning : Colors.textPrimary
                             font.pixelSize: Typography.subtitleLarge
                             font.weight: Font.DemiBold
                         }
@@ -173,7 +178,10 @@ Item {
                     PrimaryButton {
                         width: parent.width
                         text: "Continue to Modes"
-                        onClicked: continueRequested()
+                        onClicked: {
+                            root.patientData.saveProfile()
+                            root.continueRequested()
+                        }
                     }
                 }
             }

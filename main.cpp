@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     DatabaseManager databaseManager;
     databaseManager.initialize();
     AppSettings appSettings;
-    PatientController patientController;
+    PatientController patientController(&databaseManager);
     AlarmController alarmController(&databaseManager);
     EventController eventController(&databaseManager);
     VentilatorController ventilatorController(&databaseManager, &alarmController);
