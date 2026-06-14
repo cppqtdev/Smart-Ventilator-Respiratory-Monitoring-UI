@@ -21,6 +21,7 @@ class AlarmController : public QAbstractListModel
     Q_PROPERTY(QString detail READ detail WRITE setDetail NOTIFY bannerChanged)
     Q_PROPERTY(bool silenced READ silenced NOTIFY silenceChanged)
     Q_PROPERTY(int silenceRemaining READ silenceRemaining NOTIFY silenceChanged)
+    Q_PROPERTY(QString filterPriority READ filterPriority WRITE setFilterPriority NOTIFY filterChanged)
 
 public:
     enum AlarmRoles {
@@ -76,6 +77,12 @@ public:
                               const QString &description,
                               const QString &status);
 
+    /** @return Current filter priority ("" for all, or "Critical"/"Warning"/"Info"). */
+    QString filterPriority() const;
+
+    /** @brief Sets the priority filter. Empty string shows all alarms. */
+    Q_INVOKABLE void setFilterPriority(const QString &priority);
+
 public slots:
     void setActive(bool value);
     void setPriority(const QString &value);
@@ -85,6 +92,7 @@ public slots:
 signals:
     void bannerChanged();
     void silenceChanged();
+    void filterChanged();
 
 private:
     struct AlarmRow {
@@ -96,8 +104,11 @@ private:
     };
 
     static int priorityWeight(const QString &priority);
+    void rebuildFilteredIndices();
 
     QVector<AlarmRow> m_rows;
+    QVector<int> m_filteredIndices;
+    QString m_filterPriority;
     DatabaseManager *m_database = nullptr;
     bool m_active = false;
     QString m_priority = QStringLiteral("Normal");

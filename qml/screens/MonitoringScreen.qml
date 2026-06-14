@@ -166,32 +166,44 @@ Control {
                                     { lbl: "Cstat", val: root.ventilatorData.compliance, u: "mL/cmH2O" }
                                 ]
 
-                                Panel {
+                                Control {
                                     required property var modelData
                                     width: (parent.width - 36) / 4
                                     height: parent.height
+                                    leftPadding: 18
+                                    rightPadding: 18
 
-                                    Row {
-                                        anchors.centerIn: parent
+                                    background: Rectangle {
+                                        radius: Radius.medium
+                                        color: "#00000000"
+                                        border.color: Colors.line
+                                        border.width: 1
+                                    }
+
+                                    contentItem: RowLayout {
                                         spacing: 8
+
                                         Text {
                                             text: modelData.lbl
                                             color: Colors.textSecondary
                                             font.pixelSize: Typography.caption
-                                            anchors.verticalCenter: parent.verticalCenter
                                         }
+
+                                        Item {
+                                            Layout.fillWidth: true
+                                        }
+
                                         Text {
                                             text: modelData.val
                                             color: Colors.textPrimary
                                             font.pixelSize: Typography.body
                                             font.weight: Font.DemiBold
-                                            anchors.verticalCenter: parent.verticalCenter
                                         }
+
                                         Text {
                                             text: modelData.u
                                             color: Colors.textMuted
                                             font.pixelSize: Typography.caption
-                                            anchors.verticalCenter: parent.verticalCenter
                                         }
                                     }
                                 }

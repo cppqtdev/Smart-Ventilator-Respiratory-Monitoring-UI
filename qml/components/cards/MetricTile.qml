@@ -14,6 +14,7 @@ Panel {
     property string state: "normal"
     property string highValue: ""
     property string lowValue: ""
+    property string trend: ""
     color: state === "critical" ? Colors.critical : Colors.surface
     clip: true
 
@@ -72,6 +73,19 @@ Panel {
         horizontalAlignment: Text.AlignRight
         minimumPixelSize: 20
         fontSizeMode: Text.Fit
+    }
+
+    // Trend direction arrow for real-time parameter monitoring.
+    Text {
+        visible: root.trend === "rising" || root.trend === "falling"
+        anchors.right: valueText.left
+        anchors.rightMargin: 4
+        anchors.top: valueText.top
+        anchors.topMargin: 4
+        text: root.trend === "rising" ? "\u2191" : "\u2193"
+        color: root.trend === "rising" ? Colors.warning : Colors.success
+        font.pixelSize: Math.max(16, Math.min(24, parent.height * 0.18))
+        font.weight: Font.DemiBold
     }
 
     // High/low range sub-values (per Behance design)

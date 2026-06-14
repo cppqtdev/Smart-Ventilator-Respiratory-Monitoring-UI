@@ -74,10 +74,10 @@ Page {
             property real cellWidth: (width - spacing * 2) / 3
             property real cellHeight: Math.max(190, (height - spacing) / 2)
             PressureGroupBox {  labelText: "Apnea Time"; value: 20; maximumValue: 60; unit: "s" }
-            PressureGroupBox {  labelText: "PetCO2"; value: 60; maximumValue: 100; unit: "mmHg" }
-            PressureGroupBox {  labelText: "SpO2"; value: 90; maximumValue: 100; unit: "%" }
+            PressureGroupBox {  labelText: "PetCO2"; value: root.ventilatorData.etco2; maximumValue: 100; unit: "mmHg" }
+            PressureGroupBox {  labelText: "SpO2"; value: root.ventilatorData.spo2; maximumValue: 100; unit: "%" }
             PressureGroupBox {  labelText: "Low Pressure"; value: 5; maximumValue: 40; unit: "cmH2O" }
-            PressureGroupBox {  labelText: "ExpMinVol"; value: 30; maximumValue: 60; unit: "%" }
+            PressureGroupBox {  labelText: "ExpMinVol"; value: Math.round(root.ventilatorData.expMinVol); maximumValue: 60; unit: "%" }
             PressureGroupBox {  labelText: "VT Low"; value: 270; maximumValue: 900; unit: "mL" }
         }
     }
@@ -91,8 +91,8 @@ Page {
             property real cellHeight: Math.max(170, (height - spacing) / 2)
             PressureGroupBox {  labelText: "Oxygen"; value: root.ventilatorData.fio2; unit: "%" }
             PressureGroupBox {  labelText: "ExpMinVol"; value: 95; maximumValue: 200; unit: "%" }
-            PressureGroupBox {  labelText: "Ftotal"; value: 40; maximumValue: 80; unit: "b/min" }
-            PressureGroupBox {  labelText: "VT"; value: 800; maximumValue: 1000; unit: "mL" }
+            PressureGroupBox {  labelText: "Ftotal"; value: root.ventilatorData.ftotal; maximumValue: 80; unit: "b/min" }
+            PressureGroupBox {  labelText: "VT"; value: root.ventilatorData.vte; maximumValue: 1000; unit: "mL" }
             PressureGroupBox {  labelText: "Low PEEP"; value: 5; maximumValue: 30; unit: "cmH2O" }
             PressureGroupBox {  labelText: "Leak"; value: 4; maximumValue: 20; unit: "%" }
             PressureGroupBox {  labelText: "Reserve"; value: 0; maximumValue: 100; unit: "%" }

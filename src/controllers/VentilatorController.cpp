@@ -21,6 +21,12 @@ VentilatorController::VentilatorController(DatabaseManager *database,
 {
     m_sampleTimer.setInterval(45);
     connect(&m_sampleTimer, &QTimer::timeout, this, &VentilatorController::updateSimulation);
+
+    m_ventilationTimer.setInterval(1000);
+    connect(&m_ventilationTimer, &QTimer::timeout, this, [this]() {
+        ++m_ventilationSeconds;
+        emit measurementsChanged();
+    });
 }
 
 bool VentilatorController::running() const { return m_running; }
@@ -45,6 +51,18 @@ double VentilatorController::vte() const { return m_vte; }
 double VentilatorController::ftotal() const { return m_ftotal; }
 double VentilatorController::rcexp() const { return m_rcexp; }
 double VentilatorController::expMinVol() const { return m_expMinVol; }
+int VentilatorController::ventilationSeconds() const { return m_ventilationSeconds; }
+
+QString VentilatorController::ventilationTime() const
+{
+    int h = m_ventilationSeconds / 3600;
+    int m = (m_ventilationSeconds % 3600) / 60;
+    int s = m_ventilationSeconds % 60;
+    return QStringLiteral("%1:%2:%3")
+        .arg(h, 2, 10, QLatin1Char('0'))
+        .arg(m, 2, 10, QLatin1Char('0'))
+        .arg(s, 2, 10, QLatin1Char('0'));
+}
 QVariantList VentilatorController::pressureWaveform() const { return m_pressureWaveform; }
 QVariantList VentilatorController::flowWaveform() const { return m_flowWaveform; }
 QVariantList VentilatorController::volumeWaveform() const { return m_volumeWaveform; }
@@ -55,7 +73,9 @@ void VentilatorController::startVentilation()
     if (m_running)
         return;
     m_running = true;
+    m_ventilationSeconds = 0;
     m_sampleTimer.start();
+    m_ventilationTimer.start();
     if (m_database)
         m_database->logEvent(QStringLiteral("Ventilation"), QStringLiteral("Ventilation started"), QStringLiteral("Active"));
     emit runningChanged();
@@ -67,6 +87,7 @@ void VentilatorController::stopVentilation()
         return;
     m_running = false;
     m_sampleTimer.stop();
+    m_ventilationTimer.stop();
     m_pressureWaveform.clear();
     m_flowWaveform.clear();
     m_volumeWaveform.clear();

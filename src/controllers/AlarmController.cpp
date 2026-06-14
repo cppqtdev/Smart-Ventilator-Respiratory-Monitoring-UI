@@ -21,21 +21,22 @@ AlarmController::AlarmController(DatabaseManager *database, QObject *parent)
 
     addAlarm(QStringLiteral("Info"), QStringLiteral("System"),
              QStringLiteral("Controller initialized"), QStringLiteral("Closed"));
+    rebuildFilteredIndices();
 }
 
 int AlarmController::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
         return 0;
-    return m_rows.size();
+    return m_filteredIndices.size();
 }
 
 QVariant AlarmController::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid() || index.row() < 0 || index.row() >= m_rows.size())
+    if (!index.isValid() || index.row() < 0 || index.row() >= m_filteredIndices.size())
         return {};
 
-    const AlarmRow &row = m_rows.at(index.row());
+    const AlarmRow &row = m_rows.at(m_filteredIndices.at(index.row()));
     switch (role) {
     case TimeRole: return row.time;
     case PriorityRole: return row.priority;
@@ -94,12 +95,35 @@ void AlarmController::setDetail(const QString &value)
     emit bannerChanged();
 }
 
+QString AlarmController::filterPriority() const { return m_filterPriority; }
+
+void AlarmController::setFilterPriority(const QString &priority)
+{
+    if (m_filterPriority == priority)
+        return;
+    beginResetModel();
+    m_filterPriority = priority;
+    rebuildFilteredIndices();
+    endResetModel();
+    emit filterChanged();
+}
+
+void AlarmController::rebuildFilteredIndices()
+{
+    m_filteredIndices.clear();
+    for (int i = 0; i < m_rows.size(); ++i) {
+        if (m_filterPriority.isEmpty()
+            || m_rows.at(i).priority == m_filterPriority) {
+            m_filteredIndices.append(i);
+        }
+    }
+}
+
 void AlarmController::addAlarm(const QString &priority,
                                const QString &source,
                                const QString &description,
                                const QString &status)
 {
-    beginInsertRows(QModelIndex(), 0, 0);
     m_rows.prepend({
         QDateTime::currentDateTime().toString(QStringLiteral("hh:mm:ss")),
         priority,
@@ -107,7 +131,11 @@ void AlarmController::addAlarm(const QString &priority,
         description,
         status
     });
-    endInsertRows();
+
+    // Rebuild filter and notify model of change.
+    beginResetModel();
+    rebuildFilteredIndices();
+    endResetModel();
 
     if (m_database)
         m_database->logAlarm(priority, source, description, status);

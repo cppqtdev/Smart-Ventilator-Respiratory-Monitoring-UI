@@ -41,6 +41,8 @@ class VentilatorController : public QObject
     Q_PROPERTY(double ftotal READ ftotal NOTIFY measurementsChanged)
     Q_PROPERTY(double rcexp READ rcexp NOTIFY measurementsChanged)
     Q_PROPERTY(double expMinVol READ expMinVol NOTIFY measurementsChanged)
+    Q_PROPERTY(QString ventilationTime READ ventilationTime NOTIFY measurementsChanged)
+    Q_PROPERTY(int ventilationSeconds READ ventilationSeconds NOTIFY measurementsChanged)
     Q_PROPERTY(QVariantList pressureWaveform READ pressureWaveform NOTIFY waveformChanged)
     Q_PROPERTY(QVariantList flowWaveform READ flowWaveform NOTIFY waveformChanged)
     Q_PROPERTY(QVariantList volumeWaveform READ volumeWaveform NOTIFY waveformChanged)
@@ -100,6 +102,10 @@ public:
     double rcexp() const;
     /** @return Measured expired minute volume in L/min. */
     double expMinVol() const;
+    /** @return Formatted ventilation elapsed time as HH:MM:SS. */
+    QString ventilationTime() const;
+    /** @return Ventilation elapsed time in seconds. */
+    int ventilationSeconds() const;
     /** @return Rolling pressure waveform sample buffer. */
     QVariantList pressureWaveform() const;
     /** @return Rolling flow waveform sample buffer. */
@@ -182,6 +188,8 @@ private:
     double m_phase = 0;
     int m_sampleIndex = 0;
     int m_snapshotCounter = 0;
+    int m_ventilationSeconds = 0;
+    QTimer m_ventilationTimer;
     QVariantList m_pressureWaveform;
     QVariantList m_flowWaveform;
     QVariantList m_volumeWaveform;

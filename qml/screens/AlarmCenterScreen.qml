@@ -21,9 +21,9 @@ Item {
             width: parent.width
             height: 70
             spacing: 18
-            PrimaryButton { width: 170; text: "Critical"; buttonColor: Colors.critical }
-            PrimaryButton { width: 170; text: "Warning"; buttonColor: Colors.warning }
-            PrimaryButton { width: 170; text: "Info"; buttonColor: Colors.accentBlue }
+            PrimaryButton { width: 170; text: "Critical"; buttonColor: root.alarmData.filterPriority === "Critical" ? Colors.critical : Colors.surfaceRaised; onClicked: root.alarmData.setFilterPriority(root.alarmData.filterPriority === "Critical" ? "" : "Critical") }
+            PrimaryButton { width: 170; text: "Warning"; buttonColor: root.alarmData.filterPriority === "Warning" ? Colors.warning : Colors.surfaceRaised; onClicked: root.alarmData.setFilterPriority(root.alarmData.filterPriority === "Warning" ? "" : "Warning") }
+            PrimaryButton { width: 170; text: "Info"; buttonColor: root.alarmData.filterPriority === "Info" ? Colors.accentBlue : Colors.surfaceRaised; onClicked: root.alarmData.setFilterPriority(root.alarmData.filterPriority === "Info" ? "" : "Info") }
             PrimaryButton {
                 width: 260
                 text: "Acknowledge"

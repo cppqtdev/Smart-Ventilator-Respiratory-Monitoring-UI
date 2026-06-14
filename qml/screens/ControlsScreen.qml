@@ -220,7 +220,7 @@ Control {
                 }
                 Text {
                     width: parent.width
-                    text: "0:0:D"
+                    text: root.ventilatorData.ventilationTime
                     color: Colors.textPrimary
                     horizontalAlignment: Text.AlignHCenter
                     font.family: Typography.monoFamily

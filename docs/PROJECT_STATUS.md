@@ -248,3 +248,11 @@ compliance status is assessed below.
 | 2026-06-14 | --     | Added compact parameter grid (Pconf, Rate, PetCO2, Cstat)    |
 | 2026-06-14 | --     | Created TargetScreen for target parameter settings            |
 | 2026-06-14 | --     | Replaced Events with Target in bottom navigation bar          |
+| 2026-06-14 | --     | Added ventilation elapsed timer to VentilatorController       |
+| 2026-06-14 | --     | Added alarm priority filter to AlarmController                |
+| 2026-06-14 | --     | Fixed ControlsScreen: connected ventilation timer display     |
+| 2026-06-14 | --     | Fixed AlarmCenterScreen: filter buttons now toggle by priority|
+| 2026-06-14 | --     | Fixed StandbyScreen: live standby timer, patient preset buttons|
+| 2026-06-14 | --     | Fixed SystemDiagnosticsScreen: info/settings tabs now toggle  |
+| 2026-06-14 | --     | Fixed ToolsScreen: bound gauge values to live ventilator data |
+| 2026-06-14 | --     | Added trend direction arrow indicator to MetricTile           |

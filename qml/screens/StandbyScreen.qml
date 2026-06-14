@@ -18,8 +18,16 @@ Item {
     id: root
     property var patientData
     property var ventilatorData
+    property int standbySeconds: 0
     signal startRequested()
     signal setupRequested()
+
+    Timer {
+        interval: 1000
+        running: true
+        repeat: true
+        onTriggered: root.standbySeconds++
+    }
 
     RowLayout {
         anchors.fill: parent
@@ -58,7 +66,12 @@ Item {
 
                         Text {
                             width: parent.width
-                            text: "00:05:10"
+                            text: {
+                                var h = Math.floor(root.standbySeconds / 3600)
+                                var m = Math.floor((root.standbySeconds % 3600) / 60)
+                                var s = root.standbySeconds % 60
+                                return String(h).padStart(2, '0') + ":" + String(m).padStart(2, '0') + ":" + String(s).padStart(2, '0')
+                            }
                             color: Colors.textPrimary
                             horizontalAlignment: Text.AlignHCenter
                             font.family: Typography.monoFamily
@@ -154,21 +167,21 @@ Item {
                                     Layout.fillWidth: true
                                     text: "Adult/ped. 1"
                                     bgColor: Colors.buttonInactive
-                                    onClicked: {}
+                                    onClicked: { root.patientData.category = "Adult"; root.patientData.loadProfile() }
                                 }
 
                                 PrefsTabButton {
                                     Layout.fillWidth: true
                                     text: "Adult/ped. 2"
                                     bgColor: Colors.buttonInactive
-                                    onClicked: {}
+                                    onClicked: { root.patientData.category = "Adult"; root.patientData.loadProfile() }
                                 }
 
                                 PrefsTabButton {
                                     Layout.fillWidth: true
-                                    text: "Adult/ped. 2"
+                                    text: "Neonatal"
                                     bgColor: Colors.buttonInactive
-                                    onClicked: {}
+                                    onClicked: { root.patientData.category = "Neonatal"; root.patientData.loadProfile() }
                                 }
                             }
                         }

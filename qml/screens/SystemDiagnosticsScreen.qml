@@ -19,6 +19,8 @@ Page {
     property var clockData
     property var appSettingsData
     property int currentTab: 0
+    property int infoTab: 0
+    property int settingsTab: 0
 
     readonly property var tabs: ["Info", "Tests & Calib", "Sensors", "Settings"]
 
@@ -85,20 +87,22 @@ Page {
                 PrefsTabButton {
                     Layout.fillWidth: true
                     text: "Info 1"
-                    checked: true
-                    onClicked: {}
+                    checked: root.infoTab === 0
+                    onClicked: root.infoTab = 0
                 }
 
                 PrefsTabButton {
                     Layout.fillWidth: true
                     text: "Info 2"
-                    onClicked: {}
+                    checked: root.infoTab === 1
+                    onClicked: root.infoTab = 1
                 }
 
                 PrefsTabButton {
                     Layout.fillWidth: true
                     text: "Info 3"
-                    onClicked: {}
+                    checked: root.infoTab === 2
+                    onClicked: root.infoTab = 2
                 }
             }
 
@@ -244,20 +248,22 @@ Page {
                 PrefsTabButton {
                     Layout.fillWidth: true
                     text: "Loudness"
-                    checked: true
-                    onClicked: {}
+                    checked: root.settingsTab === 0
+                    onClicked: root.settingsTab = 0
                 }
 
                 PrefsTabButton {
                     Layout.fillWidth: true
                     text: "Day & Night"
-                    onClicked: {}
+                    checked: root.settingsTab === 1
+                    onClicked: root.settingsTab = 1
                 }
 
                 PrefsTabButton {
                     Layout.fillWidth: true
                     text: "Day & Time"
-                    onClicked: {}
+                    checked: root.settingsTab === 2
+                    onClicked: root.settingsTab = 2
                 }
             }
 
