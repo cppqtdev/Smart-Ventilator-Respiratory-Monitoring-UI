@@ -13,8 +13,23 @@ Control {
     id: control
     property string headline: ""
     property string detail: ""
+    property bool flashing: true
 
     clip: true
+
+    // IEC 60601-1-8: critical alarm visual indicator must flash.
+    SequentialAnimation on opacity {
+        running: control.visible && control.flashing
+        loops: Animation.Infinite
+        NumberAnimation {
+            to: 0.35; duration: 350
+            easing.type: Easing.InOutQuad
+        }
+        NumberAnimation {
+            to: 1.0; duration: 350
+            easing.type: Easing.InOutQuad
+        }
+    }
 
     background: Item {
         width: control.width

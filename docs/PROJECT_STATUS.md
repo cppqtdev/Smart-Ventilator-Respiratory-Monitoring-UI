@@ -256,3 +256,16 @@ compliance status is assessed below.
 | 2026-06-14 | --     | Fixed SystemDiagnosticsScreen: info/settings tabs now toggle  |
 | 2026-06-14 | --     | Fixed ToolsScreen: bound gauge values to live ventilator data |
 | 2026-06-14 | --     | Added trend direction arrow indicator to MetricTile           |
+| 2026-06-14 | --     | Added IEC 60601-1-8 alarm audio with silence control          |
+| 2026-06-14 | --     | Added flashing animation to AlarmBanner and AlarmCenterScreen |
+| 2026-06-14 | --     | Fixed evaluateAlarms to create alarm history rows on transitions |
+| 2026-06-14 | --     | Added alarm limit properties to VentilatorController          |
+| 2026-06-14 | --     | Rewrote ControlsScreen: all 5 tabs fully functional           |
+| 2026-06-14 | --     | Connected alarm limits to real controller thresholds          |
+| 2026-06-14 | --     | Added apneaBackupEnabled toggle with backup parameter controls|
+| 2026-06-14 | --     | Rewrote LayoutScreen with apply button and layout descriptions|
+| 2026-06-14 | --     | Fixed main.qml: added missing alarmData to ToolsScreen       |
+| 2026-06-14 | --     | Fixed StandbyScreen: changed onToggled to onClicked           |
+| 2026-06-14 | --     | Added empty state message to AlarmCenterScreen                |
+| 2026-06-14 | --     | Made ModeSelectionScreen confirm button responsive            |
+| 2026-06-14 | --     | Alarm thresholds now use controller properties instead of hardcoded values |

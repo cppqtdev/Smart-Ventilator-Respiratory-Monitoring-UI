@@ -19,7 +19,6 @@ Page {
     property var ventilatorData
     property var alarmData
     property var eventData
-    property int currentTab: 0
 
     padding: 24
 
@@ -34,6 +33,13 @@ Page {
         border.width: 1
     }
 
+    property int currentTab: 0
+
+    function selectTab(screen, index) {
+        root.currentTab = index
+        loadScreen(screen)
+    }
+
     header: Control {
         padding: 24
 
@@ -42,21 +48,23 @@ Page {
 
             PrefsTabButton {
                 Layout.fillWidth: true
-                text: "Page 1"
-                checked: true
-                onClicked: loadScreen(pageOne)
+                text: "Alarm Thresholds"
+                checked: root.currentTab === 0
+                onClicked: root.selectTab(pageOne, 0)
             }
 
             PrefsTabButton {
                 Layout.fillWidth: true
-                text: "Page 2"
-                onClicked: loadScreen(pageTwo)
+                text: "Monitoring Limits"
+                checked: root.currentTab === 1
+                onClicked: root.selectTab(pageTwo, 1)
             }
 
             PrefsTabButton {
                 Layout.fillWidth: true
-                text: "Page 3"
-                onClicked: loadScreen(alarmLog)
+                text: "Event Log"
+                checked: root.currentTab === 2
+                onClicked: root.selectTab(alarmLog, 2)
             }
         }
     }

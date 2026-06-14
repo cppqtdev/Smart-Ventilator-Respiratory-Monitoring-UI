@@ -33,6 +33,9 @@ int main(int argc, char *argv[])
     VentilatorController ventilatorController(&databaseManager, &alarmController);
     ClockController clockController;
 
+    // Restore persisted timezone from QSettings.
+    clockController.setTimeZoneId(appSettings.timeZoneId());
+
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("appSettings"), &appSettings);
     engine.rootContext()->setContextProperty(QStringLiteral("databaseManager"), &databaseManager);

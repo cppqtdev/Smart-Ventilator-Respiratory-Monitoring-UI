@@ -22,6 +22,8 @@ class AlarmController : public QAbstractListModel
     Q_PROPERTY(bool silenced READ silenced NOTIFY silenceChanged)
     Q_PROPERTY(int silenceRemaining READ silenceRemaining NOTIFY silenceChanged)
     Q_PROPERTY(QString filterPriority READ filterPriority WRITE setFilterPriority NOTIFY filterChanged)
+    Q_PROPERTY(bool audioActive READ audioActive NOTIFY audioChanged)
+    Q_PROPERTY(int alarmCount READ alarmCount NOTIFY filterChanged)
 
 public:
     enum AlarmRoles {
@@ -77,6 +79,12 @@ public:
                               const QString &description,
                               const QString &status);
 
+    /** @return True when alarm audio should be playing (active and not silenced). */
+    bool audioActive() const;
+
+    /** @return Total number of alarm rows (filtered). */
+    int alarmCount() const;
+
     /** @return Current filter priority ("" for all, or "Critical"/"Warning"/"Info"). */
     QString filterPriority() const;
 
@@ -93,6 +101,7 @@ signals:
     void bannerChanged();
     void silenceChanged();
     void filterChanged();
+    void audioChanged();
 
 private:
     struct AlarmRow {

@@ -60,6 +60,8 @@ QHash<int, QByteArray> AlarmController::roleNames() const
 
 bool AlarmController::active() const { return m_active; }
 QString AlarmController::priority() const { return m_priority; }
+bool AlarmController::audioActive() const { return m_active && !m_silenced; }
+int AlarmController::alarmCount() const { return m_filteredIndices.size(); }
 QString AlarmController::headline() const { return m_headline; }
 QString AlarmController::detail() const { return m_detail; }
 
@@ -69,6 +71,7 @@ void AlarmController::setActive(bool value)
         return;
     m_active = value;
     emit bannerChanged();
+    emit audioChanged();
 }
 
 void AlarmController::setPriority(const QString &value)
@@ -160,6 +163,7 @@ void AlarmController::silenceAlarms(int durationSeconds)
     m_silenceRemaining = durationSeconds;
     m_silenceTimer.start();
     emit silenceChanged();
+    emit audioChanged();
 
     if (m_database) {
         m_database->logEvent(QStringLiteral("Alarm"),
@@ -177,6 +181,7 @@ void AlarmController::cancelSilence()
     m_silenceRemaining = 0;
     m_silenceTimer.stop();
     emit silenceChanged();
+    emit audioChanged();
 
     if (m_database) {
         m_database->logEvent(QStringLiteral("Alarm"),

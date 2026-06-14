@@ -52,6 +52,13 @@ double VentilatorController::ftotal() const { return m_ftotal; }
 double VentilatorController::rcexp() const { return m_rcexp; }
 double VentilatorController::expMinVol() const { return m_expMinVol; }
 int VentilatorController::ventilationSeconds() const { return m_ventilationSeconds; }
+int VentilatorController::alarmHighPressure() const { return m_alarmHighPressure; }
+int VentilatorController::alarmLowPressure() const { return m_alarmLowPressure; }
+int VentilatorController::alarmApneaTime() const { return m_alarmApneaTime; }
+int VentilatorController::alarmLowVt() const { return m_alarmLowVt; }
+int VentilatorController::alarmHighMv() const { return m_alarmHighMv; }
+int VentilatorController::alarmLowSpo2() const { return m_alarmLowSpo2; }
+bool VentilatorController::apneaBackupEnabled() const { return m_apneaBackupEnabled; }
 
 QString VentilatorController::ventilationTime() const
 {
@@ -197,6 +204,61 @@ void VentilatorController::setTidalVolume(int value)
     emit settingsChanged();
 }
 
+void VentilatorController::setAlarmHighPressure(int value)
+{
+    value = qBound(10, value, 80);
+    if (m_alarmHighPressure == value) return;
+    m_alarmHighPressure = value;
+    emit settingsChanged();
+}
+
+void VentilatorController::setAlarmLowPressure(int value)
+{
+    value = qBound(0, value, 40);
+    if (m_alarmLowPressure == value) return;
+    m_alarmLowPressure = value;
+    emit settingsChanged();
+}
+
+void VentilatorController::setAlarmApneaTime(int value)
+{
+    value = qBound(5, value, 60);
+    if (m_alarmApneaTime == value) return;
+    m_alarmApneaTime = value;
+    emit settingsChanged();
+}
+
+void VentilatorController::setAlarmLowVt(int value)
+{
+    value = qBound(20, value, 900);
+    if (m_alarmLowVt == value) return;
+    m_alarmLowVt = value;
+    emit settingsChanged();
+}
+
+void VentilatorController::setAlarmHighMv(int value)
+{
+    value = qBound(1, value, 30);
+    if (m_alarmHighMv == value) return;
+    m_alarmHighMv = value;
+    emit settingsChanged();
+}
+
+void VentilatorController::setAlarmLowSpo2(int value)
+{
+    value = qBound(70, value, 100);
+    if (m_alarmLowSpo2 == value) return;
+    m_alarmLowSpo2 = value;
+    emit settingsChanged();
+}
+
+void VentilatorController::setApneaBackupEnabled(bool value)
+{
+    if (m_apneaBackupEnabled == value) return;
+    m_apneaBackupEnabled = value;
+    emit settingsChanged();
+}
+
 void VentilatorController::appendSample(QVariantList &buffer, double value)
 {
     buffer.append(value);
@@ -269,7 +331,17 @@ void VentilatorController::evaluateAlarms()
     if (!m_alarmController)
         return;
 
-    if (m_ppeak > 42) {
+    // Throttle alarm row creation: only add a new row when the alarm state
+    // transitions (not every 45ms sample tick).
+    const bool wasPreviouslyActive = m_alarmController->active();
+
+    if (m_ppeak > m_alarmHighPressure) {
+        if (!wasPreviouslyActive || m_alarmController->headline() != QStringLiteral("High Pressure")) {
+            m_alarmController->addAlarm(
+                QStringLiteral("Critical"), QStringLiteral("Pressure"),
+                QStringLiteral("Paw above limit — Ppeak ") + QString::number(qRound(m_ppeak)) + QStringLiteral(" cmH2O"),
+                QStringLiteral("Active"));
+        }
         m_alarmController->setActive(true);
         m_alarmController->setPriority(QStringLiteral("Critical"));
         m_alarmController->setHeadline(QStringLiteral("High Pressure"));
@@ -277,7 +349,13 @@ void VentilatorController::evaluateAlarms()
         return;
     }
 
-    if (m_minuteVolume > 145) {
+    if (m_minuteVolume > m_alarmHighMv * 10) {
+        if (!wasPreviouslyActive || m_alarmController->headline() != QStringLiteral("High Minute Volume")) {
+            m_alarmController->addAlarm(
+                QStringLiteral("Critical"), QStringLiteral("Volume"),
+                QStringLiteral("Minute volume ") + QString::number(m_minuteVolume) + QStringLiteral("% exceeds limit"),
+                QStringLiteral("Active"));
+        }
         m_alarmController->setActive(true);
         m_alarmController->setPriority(QStringLiteral("Critical"));
         m_alarmController->setHeadline(QStringLiteral("High Minute Volume"));
@@ -285,6 +363,41 @@ void VentilatorController::evaluateAlarms()
         return;
     }
 
+    if (m_spo2 < m_alarmLowSpo2 && m_spo2 > 0) {
+        if (!wasPreviouslyActive || m_alarmController->headline() != QStringLiteral("Low SpO2")) {
+            m_alarmController->addAlarm(
+                QStringLiteral("Warning"), QStringLiteral("Oximetry"),
+                QStringLiteral("SpO2 ") + QString::number(qRound(m_spo2)) + QStringLiteral("% below threshold"),
+                QStringLiteral("Active"));
+        }
+        m_alarmController->setActive(true);
+        m_alarmController->setPriority(QStringLiteral("Warning"));
+        m_alarmController->setHeadline(QStringLiteral("Low SpO2"));
+        m_alarmController->setDetail(QStringLiteral("Oxygen saturation below 90%"));
+        return;
+    }
+
+    if (m_etco2 > 50) {
+        if (!wasPreviouslyActive || m_alarmController->headline() != QStringLiteral("High EtCO2")) {
+            m_alarmController->addAlarm(
+                QStringLiteral("Warning"), QStringLiteral("Capnography"),
+                QStringLiteral("EtCO2 ") + QString::number(qRound(m_etco2)) + QStringLiteral(" mmHg above limit"),
+                QStringLiteral("Active"));
+        }
+        m_alarmController->setActive(true);
+        m_alarmController->setPriority(QStringLiteral("Warning"));
+        m_alarmController->setHeadline(QStringLiteral("High EtCO2"));
+        m_alarmController->setDetail(QStringLiteral("End-tidal CO2 elevated"));
+        return;
+    }
+
+    // Clear alarm state when all conditions are normal.
+    if (wasPreviouslyActive) {
+        m_alarmController->addAlarm(
+            QStringLiteral("Info"), QStringLiteral("System"),
+            QStringLiteral("All parameters within normal limits"),
+            QStringLiteral("Resolved"));
+    }
     m_alarmController->setActive(false);
     m_alarmController->setPriority(QStringLiteral("Normal"));
     m_alarmController->setHeadline(QStringLiteral("No Active Alarms"));

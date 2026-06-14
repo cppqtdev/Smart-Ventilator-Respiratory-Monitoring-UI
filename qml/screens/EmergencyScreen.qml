@@ -122,7 +122,7 @@ Control {
                         ? root.ventilatorData.ppeak : 0
                     unit: "cmH2O"
                     state: root.ventilatorData
-                        && root.ventilatorData.ppeak > 42
+                        && root.ventilatorData.ppeak > root.ventilatorData.alarmHighPressure
                         ? "critical" : "normal"
                 }
 

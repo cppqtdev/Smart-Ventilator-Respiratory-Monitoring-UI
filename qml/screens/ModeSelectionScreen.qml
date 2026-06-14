@@ -61,9 +61,10 @@ Control {
         }
 
         PrimaryButton {
-            width: 360
+            width: Math.min(360, parent.width * 0.3)
             text: "Confirm Mode & Start"
-            onClicked: modeConfirmed()
+            buttonColor: Colors.success
+            onClicked: root.modeConfirmed()
         }
     }
 }

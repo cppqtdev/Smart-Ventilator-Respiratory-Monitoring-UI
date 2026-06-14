@@ -42,6 +42,13 @@ class VentilatorController : public QObject
     Q_PROPERTY(double rcexp READ rcexp NOTIFY measurementsChanged)
     Q_PROPERTY(double expMinVol READ expMinVol NOTIFY measurementsChanged)
     Q_PROPERTY(QString ventilationTime READ ventilationTime NOTIFY measurementsChanged)
+    Q_PROPERTY(int alarmHighPressure READ alarmHighPressure WRITE setAlarmHighPressure NOTIFY settingsChanged)
+    Q_PROPERTY(int alarmLowPressure READ alarmLowPressure WRITE setAlarmLowPressure NOTIFY settingsChanged)
+    Q_PROPERTY(int alarmApneaTime READ alarmApneaTime WRITE setAlarmApneaTime NOTIFY settingsChanged)
+    Q_PROPERTY(int alarmLowVt READ alarmLowVt WRITE setAlarmLowVt NOTIFY settingsChanged)
+    Q_PROPERTY(int alarmHighMv READ alarmHighMv WRITE setAlarmHighMv NOTIFY settingsChanged)
+    Q_PROPERTY(int alarmLowSpo2 READ alarmLowSpo2 WRITE setAlarmLowSpo2 NOTIFY settingsChanged)
+    Q_PROPERTY(bool apneaBackupEnabled READ apneaBackupEnabled WRITE setApneaBackupEnabled NOTIFY settingsChanged)
     Q_PROPERTY(int ventilationSeconds READ ventilationSeconds NOTIFY measurementsChanged)
     Q_PROPERTY(QVariantList pressureWaveform READ pressureWaveform NOTIFY waveformChanged)
     Q_PROPERTY(QVariantList flowWaveform READ flowWaveform NOTIFY waveformChanged)
@@ -106,6 +113,15 @@ public:
     QString ventilationTime() const;
     /** @return Ventilation elapsed time in seconds. */
     int ventilationSeconds() const;
+
+    int alarmHighPressure() const;
+    int alarmLowPressure() const;
+    int alarmApneaTime() const;
+    int alarmLowVt() const;
+    int alarmHighMv() const;
+    int alarmLowSpo2() const;
+    bool apneaBackupEnabled() const;
+
     /** @return Rolling pressure waveform sample buffer. */
     QVariantList pressureWaveform() const;
     /** @return Rolling flow waveform sample buffer. */
@@ -143,6 +159,14 @@ public slots:
     void setMinuteVolume(int value);
     /** @param value Tidal volume setpoint in mL. */
     void setTidalVolume(int value);
+
+    void setAlarmHighPressure(int value);
+    void setAlarmLowPressure(int value);
+    void setAlarmApneaTime(int value);
+    void setAlarmLowVt(int value);
+    void setAlarmHighMv(int value);
+    void setAlarmLowSpo2(int value);
+    void setApneaBackupEnabled(bool value);
 
 signals:
     void runningChanged();
@@ -185,6 +209,13 @@ private:
     double m_ftotal = 0;
     double m_rcexp = 0;
     double m_expMinVol = 0;
+    int m_alarmHighPressure = 40;
+    int m_alarmLowPressure = 5;
+    int m_alarmApneaTime = 20;
+    int m_alarmLowVt = 300;
+    int m_alarmHighMv = 12;
+    int m_alarmLowSpo2 = 90;
+    bool m_apneaBackupEnabled = true;
     double m_phase = 0;
     int m_sampleIndex = 0;
     int m_snapshotCounter = 0;

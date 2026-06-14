@@ -37,7 +37,7 @@ Control {
                 unit: "cmH2O"
                 highValue: "40"
                 lowValue: "5"
-                state: root.ventilatorData.ppeak > 42
+                state: root.ventilatorData.ppeak > root.ventilatorData.alarmHighPressure
                     ? "critical" : "normal"
             }
             MetricTile {

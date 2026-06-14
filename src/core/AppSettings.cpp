@@ -31,6 +31,16 @@ QString AppSettings::language() const
     return m_settings.value(QStringLiteral("ui/language"), QStringLiteral("English")).toString();
 }
 
+QString AppSettings::dayNightMode() const
+{
+    return m_settings.value(QStringLiteral("ui/dayNightMode"), QStringLiteral("Day")).toString();
+}
+
+QString AppSettings::timeZoneId() const
+{
+    return m_settings.value(QStringLiteral("ui/timeZoneId"), QStringLiteral("Asia/Kolkata")).toString();
+}
+
 void AppSettings::setOperatingHours(double hours)
 {
     if (qFuzzyCompare(operatingHours(), hours))
@@ -61,4 +71,20 @@ void AppSettings::setLanguage(const QString &value)
         return;
     m_settings.setValue(QStringLiteral("ui/language"), value);
     emit languageChanged();
+}
+
+void AppSettings::setDayNightMode(const QString &value)
+{
+    if (dayNightMode() == value)
+        return;
+    m_settings.setValue(QStringLiteral("ui/dayNightMode"), value);
+    emit dayNightModeChanged();
+}
+
+void AppSettings::setTimeZoneId(const QString &value)
+{
+    if (timeZoneId() == value)
+        return;
+    m_settings.setValue(QStringLiteral("ui/timeZoneId"), value);
+    emit timeZoneIdChanged();
 }

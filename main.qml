@@ -8,6 +8,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
 import QtQuick.Controls.Basic
+import QtMultimedia
 
 import "qml/styles"
 import "qml/components/navigation"
@@ -105,6 +106,27 @@ ApplicationWindow {
         softwareVersion: appSettings.softwareVersion
         operatingHours: appSettings.operatingHours
         onFinished: root.splashActive = false
+    }
+
+    // IEC 60601-1-8 alarm audio: always alive in the root window so the
+    // alarm tone plays regardless of which screen is currently loaded.
+    MediaPlayer {
+        id: alarmAudioPlayer
+        source: "qrc:/qml/assets/audio/alarm_tone.wav"
+        loops: MediaPlayer.Infinite
+        audioOutput: AudioOutput {
+            volume: root.alarmModel.audioActive ? 0.8 : 0.0
+        }
+    }
+
+    Connections {
+        target: root.alarmModel
+        function onAudioChanged() {
+            if (root.alarmModel.audioActive)
+                alarmAudioPlayer.play()
+            else
+                alarmAudioPlayer.stop()
+        }
     }
 
     // Global interaction detector to reset the screen lock timer.
@@ -213,6 +235,7 @@ ApplicationWindow {
         id: toolsScreen
         ToolsScreen {
             ventilatorData: ventilatorModel
+            alarmData: alarmModel
             eventData: eventModel
         }
     }

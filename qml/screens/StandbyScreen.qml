@@ -312,7 +312,7 @@ Item {
                         PrefsTabButton {
                             width: Math.min(170, parent.width)
                             text: root.ventilatorData.frozen ? "Freeze" : "Resume"
-                            onToggled: root.ventilatorData.toggleFreeze()
+                            onClicked: root.ventilatorData.toggleFreeze()
                         }
 
                         PressureGroupBox {

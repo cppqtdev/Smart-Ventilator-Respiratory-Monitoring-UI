@@ -44,5 +44,6 @@
         <file>qml/components/charts/PressureControl.qml</file>
         <file>qml/components/charts/PressureGroupBox.qml</file>
         <file>qml/assets/icons/lungs.png</file>
+        <file>qml/assets/audio/alarm_tone.wav</file>
     </qresource>
 </RCC>
