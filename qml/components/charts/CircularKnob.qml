@@ -1,8 +1,10 @@
-import QtQuick 2.15
+import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Layouts
+
 import "../../styles"
 
-Item {
+Control {
     id: root
     property string label: "Oxygen"
     property int value: 60
@@ -12,85 +14,161 @@ Item {
     signal valueChangedByUser(int value)
     clip: true
 
-    Text {
-        id: titleText
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        text: root.label
-        color: Colors.textPrimary
-        font.pixelSize: Math.max(16, Math.min(28, root.height * 0.13))
-        font.bold: true
-        wrapMode: Text.WordWrap
-        maximumLineCount: 2
-        elide: Text.ElideRight
-    }
+    contentItem: ColumnLayout {
+        spacing: 0
 
-    Button {
-        id: minusButton
-        width: Math.max(52, Math.min(72, root.width * 0.18))
-        height: Math.max(52, Math.min(72, root.height * 0.30))
-        anchors.left: parent.left
-        anchors.verticalCenter: knob.verticalCenter
-        text: "-"
-        font.pixelSize: Math.max(24, Math.min(34, height * 0.48))
-        onClicked: root.valueChangedByUser(Math.max(root.minimum, root.value - 1))
-        background: Rectangle { radius: 7; color: "#236AB2" }
-        contentItem: Text { text: minusButton.text; color: "white"; font: minusButton.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-    }
-
-    Canvas {
-        id: knob
-        width: Math.max(88, Math.min(root.width - minusButton.width * 2 - 32, root.height - titleText.height - 10))
-        height: width
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        onPaint: {
-            var ctx = getContext("2d")
-            var cx = width / 2
-            var cy = height / 2
-            var r = width * 0.38
-            ctx.clearRect(0, 0, width, height)
-            ctx.lineWidth = width * 0.08
-            ctx.strokeStyle = Colors.disabled
-            ctx.beginPath()
-            ctx.arc(cx, cy, r, -Math.PI / 2, Math.PI * 1.5)
-            ctx.stroke()
-            ctx.strokeStyle = Colors.accentBlue
-            ctx.beginPath()
-            var end = -Math.PI / 2 + (Math.PI * 2 * (root.value - root.minimum) / (root.maximum - root.minimum))
-            ctx.arc(cx, cy, r, -Math.PI / 2, end)
-            ctx.stroke()
+        Text {
+            id: labelText
+            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            text: root.label
+            color: "#CDCFD5"
+            font.pixelSize: 21
+            font.bold: true
         }
-        Connections { target: root; function onValueChanged() { knob.requestPaint() } }
-    }
 
-    Text {
-        anchors.centerIn: knob
-        text: root.value + "\n" + root.unit
-        color: Colors.textPrimary
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        width: knob.width * 0.72
-        height: knob.height * 0.62
-        font.pixelSize: Math.max(18, Math.min(36, knob.width * 0.18))
-        font.bold: true
-        minimumPixelSize: 14
-        fontSizeMode: Text.Fit
-        wrapMode: Text.Wrap
-        lineHeight: 0.82
-    }
+        Control {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
 
-    Button {
-        id: plusButton
-        width: minusButton.width
-        height: minusButton.height
-        anchors.right: parent.right
-        anchors.verticalCenter: knob.verticalCenter
-        text: "+"
-        font.pixelSize: minusButton.font.pixelSize
-        onClicked: root.valueChangedByUser(Math.min(root.maximum, root.value + 1))
-        background: Rectangle { radius: 7; color: "#236AB2" }
-        contentItem: Text { text: plusButton.text; color: "white"; font: plusButton.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+            Control {
+                padding: 5
+                height: 160
+                width: 160
+                anchors.centerIn: parent
+
+                background: Rectangle {
+                    radius: height / 2
+                    color: Colors.surface
+                }
+
+                contentItem: Canvas {
+                    id: knob
+                    onPaint: {
+                        var ctx = getContext("2d")
+                        var cx = width / 2
+                        var cy = height / 2
+                        var r = width * 0.38
+                        ctx.clearRect(0, 0, width, height)
+                        ctx.lineWidth = width * 0.08
+                        ctx.strokeStyle = Colors.disabled
+                        ctx.beginPath()
+                        ctx.arc(cx, cy, r, -Math.PI / 2, Math.PI * 1.5)
+                        ctx.stroke()
+                        ctx.strokeStyle = Colors.accentBlue
+                        ctx.beginPath()
+                        var end = -Math.PI / 2 + (Math.PI * 2 * (root.value - root.minimum) / (root.maximum - root.minimum))
+                        ctx.arc(cx, cy, r, -Math.PI / 2, end)
+                        ctx.stroke()
+                    }
+                    Connections { target: root; function onValueChanged() { knob.requestPaint() } }
+                }
+
+                Control {
+                    anchors.centerIn: parent
+
+                    contentItem: Column {
+                        spacing: 2
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: root.value
+                            color: "#D7D9DC"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            font.pixelSize: 34
+                            font.weight: Font.DemiBold
+                        }
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: root.unit
+                            color: "#6C7586"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            font.pixelSize: 19
+                            font.bold: true
+                        }
+                    }
+                }
+            }
+
+            background: ColumnLayout {
+                Item {
+                    Layout.preferredHeight: 25
+                }
+
+                RowLayout {
+                    spacing: 0
+
+                    Item {
+                        Layout.preferredWidth: 60
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        radius: 7; color: "#236AB2"
+                        topRightRadius: 0
+                        bottomRightRadius: 0
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        radius: 7; color: "#236AB2"
+                        topLeftRadius: 0
+                        bottomLeftRadius: 0
+                    }
+
+                    Item {
+                        Layout.preferredWidth: 60
+                    }
+                }
+
+                Item {
+                    Layout.preferredHeight: 25
+                }
+            }
+
+            contentItem: RowLayout {
+                spacing: 10
+
+                Item {
+                    Layout.preferredWidth: 55
+                    Layout.fillHeight: true
+                }
+
+                ToolButton {
+                    id: minusButton
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+                    text: "-"
+                    palette.buttonText: "#D7D9DC"
+                    font.pixelSize: 34
+
+                    onClicked: root.valueChangedByUser(Math.max(root.minimum, root.value - 1))
+                    background: Item { implicitWidth: 40; implicitHeight: 40 }
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                }
+
+                ToolButton {
+                    id: plusButton
+                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                    text: "+"
+                    palette.buttonText: "#D7D9DC"
+                    font.pixelSize: 34
+                    onClicked: root.valueChangedByUser(Math.min(root.maximum, root.value + 1))
+                    background: Item { implicitWidth: 40; implicitHeight: 40 }
+                }
+
+                Item {
+                    Layout.preferredWidth: 55
+                    Layout.fillHeight: true
+                }
+            }
+        }
     }
 }

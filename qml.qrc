@@ -28,5 +28,16 @@
         <file>qml/screens/EventsScreen.qml</file>
         <file>qml/screens/ToolsScreen.qml</file>
         <file>qml/screens/LayoutScreen.qml</file>
+        <file>qml/components/buttons/PrefsTabButton.qml</file>
+        <file>qml/assets/icons/chanrge.svg</file>
+        <file>qml/assets/icons/plug.svg</file>
+        <file>qml/assets/icons/signal.svg</file>
+        <file>qml/assets/icons/mic.svg</file>
+        <file>qml/assets/icons/person.svg</file>
+        <file>qml/components/indicators/DateTimeBanner.qml</file>
+        <file>qml/components/charts/CurvedSideButton.qml</file>
+        <file>qml/components/charts/PressureControl.qml</file>
+        <file>qml/components/charts/PressureGroupBox.qml</file>
+        <file>qml/assets/icons/lungs.png</file>
     </qresource>
 </RCC>

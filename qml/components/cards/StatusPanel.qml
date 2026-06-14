@@ -1,65 +1,99 @@
-import QtQuick 2.15
+import QtQuick
+import QtQuick.Controls.Basic
+import QtQuick.Layouts
 import "../../styles"
 
-Rectangle {
+Control {
     id: root
     property string mode: "ASV"
     property string patientCategory: "Adult"
-    radius: Radius.medium
-    color: Colors.surface
+
+    padding: 18
     clip: true
 
-    Row {
-        anchors.fill: parent
-        anchors.margins: 18
+    background: Rectangle {
+        implicitHeight: 86
+        implicitWidth: 280
+        radius: Radius.medium
+        color: Colors.surface
+        border.color: Colors.line
+    }
+
+    contentItem: RowLayout {
         spacing: 18
-        Rectangle {
-            width: Math.min(132, parent.width * 0.34)
-            height: parent.height
-            radius: 8
-            color: Colors.disabled
-            border.color: Colors.textSecondary
-            Text {
-                anchors.centerIn: parent
-                width: parent.width - 12
-                height: parent.height - 8
-                text: root.mode + "\nMODE"
-                color: Colors.textPrimary
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                font.bold: true
-                font.pixelSize: 26
-                minimumPixelSize: 16
-                fontSizeMode: Text.Fit
+
+        Control {
+
+            background: Rectangle {
+                implicitWidth: 85
+                implicitHeight: 49
+                radius: 8
+                color: Colors.transparent
+                border.color: Colors.disabled
+            }
+
+            contentItem: ColumnLayout {
+                spacing: 0
+
+                Text {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: root.mode
+                    color: Colors.textPrimary
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    font.bold: true
+                    font.pixelSize: 26
+                }
+
+                Control {
+                    Layout.alignment: Qt.AlignBottom | Qt.AlignVCenter
+                    Layout.fillWidth: true
+                    padding: 2
+
+                    background: Rectangle {
+                        radius: 0
+                        bottomLeftRadius: 8
+                        bottomRightRadius: 8
+                        color: Colors.disabled
+                    }
+
+                    contentItem: Text {
+                        text: "MODE"
+                        color: Colors.textPrimary
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.weight: Font.DemiBold
+                        font.pixelSize: 14
+                    }
+                }
             }
         }
-        Text {
-            width: 48
-            anchors.verticalCenter: parent.verticalCenter
-            text: root.patientCategory.charAt(0)
-            color: Colors.textPrimary
-            font.pixelSize: 38
-            font.bold: true
-            horizontalAlignment: Text.AlignHCenter
+
+        Image {
+            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+            source: "qrc:/qml/assets/icons/signal.svg"
+
+            Text {
+                anchors.centerIn: parent
+                text: root.patientCategory.charAt(0)
+                color: Colors.textBackground
+                font.pixelSize: 23
+                font.weight: Font.DemiBold
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
         }
-        Text {
-            width: 42
-            anchors.verticalCenter: parent.verticalCenter
-            text: "\u25CF"
-            color: Colors.success
-            font.pixelSize: 38
-            horizontalAlignment: Text.AlignHCenter
+
+        Image {
+            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+            source: "qrc:/qml/assets/icons/person.svg"
+            sourceSize: Qt.size(33, 27)
         }
-        Text {
-            width: Math.max(70, parent.width - 132 - 48 - 42 - parent.spacing * 3)
-            anchors.verticalCenter: parent.verticalCenter
-            text: "Circuit"
-            color: Colors.textPrimary
-            font.pixelSize: 26
-            font.bold: true
-            elide: Text.ElideRight
-            minimumPixelSize: 16
-            fontSizeMode: Text.Fit
+
+        Image {
+            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+            source: "qrc:/qml/assets/icons/mic.svg"
+            sourceSize: Qt.size(47, 19)
         }
     }
 }

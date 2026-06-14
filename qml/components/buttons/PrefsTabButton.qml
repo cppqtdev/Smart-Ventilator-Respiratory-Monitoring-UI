@@ -2,24 +2,26 @@ import QtQuick 2.15
 import QtQuick.Controls.Basic
 import "../../styles"
 
-Button {
-    id: root
-    property color buttonColor: Colors.success
-
-    font.pixelSize: 18
-    font.bold: true
+TabButton {
+    id: control
     font.family: "Courier New"
+    font.pixelSize: 18
+    font.bold: Font.DemiBold
+
+    property color bgColor: checked ? Colors.accentBlue : Colors.disabled
 
     background: Rectangle {
         implicitHeight: 48
+        implicitWidth: 154
         radius: Radius.small
-        color: root.enabled ? root.buttonColor : Colors.disabled
+        color: control.bgColor
+        opacity: enabled ? 1 : 0.55
     }
 
     contentItem: Text {
-        text: root.text
+        text: control.text
         color: Colors.textPrimary
-        font: root.font
+        font: control.font
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight

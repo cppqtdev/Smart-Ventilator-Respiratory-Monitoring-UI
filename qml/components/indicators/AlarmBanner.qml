@@ -1,35 +1,66 @@
-import QtQuick 2.15
+import QtQuick
+import QtQuick.Controls.Basic
+import QtQuick.Layouts
+
 import "../../styles"
 
-Rectangle {
+Control {
+    id: control
     property string headline: ""
     property string detail: ""
-    radius: Radius.medium
-    color: Colors.warning
+
     clip: true
 
-    Rectangle {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        height: parent.height * 0.55
-        color: Colors.critical
-        Text {
-            anchors.centerIn: parent
-            text: headline
-            color: Colors.textPrimary
-            font.pixelSize: Math.max(22, parent.height * 0.42)
-            font.bold: true
-        }
+    background: Item {
+        width: control.width
+        implicitHeight: 86
     }
 
-    Text {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 10
-        text: detail
-        color: Colors.textPrimary
-        font.pixelSize: Math.max(20, parent.height * 0.25)
-        font.bold: true
+    contentItem: ColumnLayout {
+        spacing: 0
+
+        Control {
+            Layout.fillWidth: true
+            padding: 10
+
+            background: Rectangle {
+                radius: Radius.medium
+                bottomLeftRadius: 0
+                bottomRightRadius: 0
+                color: Colors.critical
+            }
+
+            contentItem: Text {
+                text: headline
+                color: Colors.textPrimary
+                font.pixelSize: 19
+                font.bold: true
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+        }
+
+
+        Control {
+            Layout.fillWidth: true
+            padding: 10
+
+            background: Rectangle {
+                topLeftRadius: 0
+                topRightRadius: 0
+                radius: Radius.medium
+                color: Colors.warning
+            }
+
+            contentItem: Text {
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+
+                text: detail
+                color: Colors.textPrimary
+                font.pixelSize: 19
+                font.bold: true
+            }
+        }
     }
 }

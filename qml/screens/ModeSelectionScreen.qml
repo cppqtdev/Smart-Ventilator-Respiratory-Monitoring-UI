@@ -1,16 +1,22 @@
 import QtQuick 2.15
+import QtQuick.Controls.Basic
+import QtQuick.Layouts
+
 import "../styles"
 import "../components/cards"
 import "../components/buttons"
 
-Item {
+Control {
     property var ventilatorData
     signal modeConfirmed()
 
-    Column {
-        anchors.fill: parent
+    padding: 0
+    bottomPadding: 24
+
+    contentItem: Column {
         spacing: Spacing.panelGap
         Text { text: "Ventilation Mode Selection"; color: Colors.textPrimary; font.pixelSize: 34; font.bold: true }
+
         Grid {
             width: parent.width
             height: parent.height - 120
@@ -38,6 +44,7 @@ Item {
                 }
             }
         }
+
         PrimaryButton {
             width: 360
             text: "Confirm Mode & Start"

@@ -6,26 +6,31 @@ import "../styles"
 import "../components/cards"
 import "../components/buttons"
 
-Item {
+Control {
     id: root
     property int selectedLayout: 1
 
-    Panel {
+    background: Rectangle {
+        radius: Radius.medium
+        color: Colors.surface
+        border.color: Colors.line
+        border.width: 1
+    }
+
+    contentItem: Flickable {
         anchors.fill: parent
+        contentWidth: width
+        contentHeight: layoutGrid.height
         clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
-        Flickable {
-            anchors.fill: parent
-            anchors.margins: 28
-            contentWidth: width
-            contentHeight: layoutGrid.height
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
-            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+        Control {
+            width: root.width
+            padding: 24
 
-            Grid {
+            contentItem: Grid {
                 id: layoutGrid
-                width: parent.width
                 columns: 3
                 spacing: 34
 
@@ -39,7 +44,6 @@ Item {
 
                         PrimaryButton {
                             width: parent.width
-                            height: 66
                             text: "Layout " + (layoutDelegate.index + 1)
                             buttonColor: root.selectedLayout === layoutDelegate.index + 1 ? Colors.accentBlue : "#9AA2AE"
                             onClicked: root.selectedLayout = layoutDelegate.index + 1
