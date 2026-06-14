@@ -26,29 +26,55 @@ Control {
             Layout.preferredWidth: parent.width * 0.22
             Layout.fillHeight: true
 
-            spacing: 16
-            property real tileHeight: (height - spacing * 4) / 5
+            spacing: 12
+            property real tileHeight: (height - spacing * 6) / 7
+
             MetricTile {
                 width: parent.width
                 height: parent.tileHeight
                 label: "Ppeak"
                 value: root.ventilatorData.ppeak
                 unit: "cmH2O"
-                state: root.ventilatorData.ppeak > 42 ? "critical" : "normal"
+                highValue: "40"
+                lowValue: "5"
+                state: root.ventilatorData.ppeak > 42
+                    ? "critical" : "normal"
             }
             MetricTile {
                 width: parent.width
                 height: parent.tileHeight
-                label: "Pplat"
-                value: root.ventilatorData.pplat
-                unit: "cmH2O"
+                label: "ExpMinVol"
+                value: root.ventilatorData.expMinVol
+                unit: "L/min"
+                highValue: "19.9"
+                lowValue: "10.0"
             }
             MetricTile {
                 width: parent.width
                 height: parent.tileHeight
-                label: "Pmean"
-                value: root.ventilatorData.pmean
-                unit: "cmH2O"
+                label: "VTE"
+                value: root.ventilatorData.vte
+                unit: "mL"
+                highValue: "839"
+                lowValue: "288"
+            }
+            MetricTile {
+                width: parent.width
+                height: parent.tileHeight
+                label: "Ftotal"
+                value: root.ventilatorData.ftotal
+                unit: "b/min"
+                highValue: "40"
+                lowValue: "8"
+            }
+            MetricTile {
+                width: parent.width
+                height: parent.tileHeight
+                label: "RCexp"
+                value: root.ventilatorData.rcexp
+                unit: "s"
+                highValue: "5"
+                lowValue: "0"
             }
             MetricTile {
                 width: parent.width
@@ -63,7 +89,8 @@ Control {
                 label: "Minute Vol"
                 value: root.ventilatorData.minuteVolume
                 unit: "%"
-                state: root.ventilatorData.minuteVolume > 145 ? "critical" : "normal"
+                state: root.ventilatorData.minuteVolume > 145
+                    ? "critical" : "normal"
             }
         }
 
@@ -125,6 +152,52 @@ Control {
                             minimumValue: 0
                             maximumValue: 50
                         }
+                        // Compact parameter grid per Behance design
+                        Row {
+                            width: parent.width
+                            height: 56
+                            spacing: 12
+
+                            Repeater {
+                                model: [
+                                    { lbl: "Pconf", val: root.ventilatorData.pressureSupport, u: "cmH2O" },
+                                    { lbl: "Rate", val: root.ventilatorData.respiratoryRate, u: "1/min" },
+                                    { lbl: "PetCO2", val: root.ventilatorData.etco2, u: "mmHg" },
+                                    { lbl: "Cstat", val: root.ventilatorData.compliance, u: "mL/cmH2O" }
+                                ]
+
+                                Panel {
+                                    required property var modelData
+                                    width: (parent.width - 36) / 4
+                                    height: parent.height
+
+                                    Row {
+                                        anchors.centerIn: parent
+                                        spacing: 8
+                                        Text {
+                                            text: modelData.lbl
+                                            color: Colors.textSecondary
+                                            font.pixelSize: Typography.caption
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                        Text {
+                                            text: modelData.val
+                                            color: Colors.textPrimary
+                                            font.pixelSize: Typography.body
+                                            font.weight: Font.DemiBold
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                        Text {
+                                            text: modelData.u
+                                            color: Colors.textMuted
+                                            font.pixelSize: Typography.caption
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         Row {
                             width: parent.width
                             height: Math.max(170, waveformFlickable.height * 0.26)

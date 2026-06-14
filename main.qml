@@ -55,6 +55,8 @@ ApplicationWindow {
             return toolsScreen
         if (root.currentScreen === "layout")
             return layoutScreen
+        if (root.currentScreen === "target")
+            return targetScreen
         if (root.currentScreen === "shutdown")
             return shutdownScreen
         if (root.currentScreen === "emergency")
@@ -218,6 +220,13 @@ ApplicationWindow {
     Component {
         id: layoutScreen
         LayoutScreen {}
+    }
+
+    Component {
+        id: targetScreen
+        TargetScreen {
+            ventilatorData: ventilatorModel
+        }
     }
 
     Component {

@@ -12,6 +12,8 @@ Panel {
     property string value: "38"
     property string unit: "cmH2O"
     property string state: "normal"
+    property string highValue: ""
+    property string lowValue: ""
     color: state === "critical" ? Colors.critical : Colors.surface
     clip: true
 
@@ -70,6 +72,29 @@ Panel {
         horizontalAlignment: Text.AlignRight
         minimumPixelSize: 20
         fontSizeMode: Text.Fit
+    }
+
+    // High/low range sub-values (per Behance design)
+    Column {
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 18
+        anchors.bottomMargin: 12
+        visible: root.highValue.length > 0 || root.lowValue.length > 0
+        spacing: 2
+
+        Text {
+            visible: root.highValue.length > 0
+            text: root.highValue
+            color: Colors.textMuted
+            font.pixelSize: Math.max(12, Math.min(16, root.height * 0.11))
+        }
+        Text {
+            visible: root.lowValue.length > 0
+            text: root.lowValue
+            color: Colors.textMuted
+            font.pixelSize: Math.max(12, Math.min(16, root.height * 0.11))
+        }
     }
 
     Text {

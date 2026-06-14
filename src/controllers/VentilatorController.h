@@ -37,6 +37,10 @@ class VentilatorController : public QObject
     Q_PROPERTY(double etco2 READ etco2 NOTIFY measurementsChanged)
     Q_PROPERTY(double compliance READ compliance NOTIFY measurementsChanged)
     Q_PROPERTY(double resistance READ resistance NOTIFY measurementsChanged)
+    Q_PROPERTY(double vte READ vte NOTIFY measurementsChanged)
+    Q_PROPERTY(double ftotal READ ftotal NOTIFY measurementsChanged)
+    Q_PROPERTY(double rcexp READ rcexp NOTIFY measurementsChanged)
+    Q_PROPERTY(double expMinVol READ expMinVol NOTIFY measurementsChanged)
     Q_PROPERTY(QVariantList pressureWaveform READ pressureWaveform NOTIFY waveformChanged)
     Q_PROPERTY(QVariantList flowWaveform READ flowWaveform NOTIFY waveformChanged)
     Q_PROPERTY(QVariantList volumeWaveform READ volumeWaveform NOTIFY waveformChanged)
@@ -88,6 +92,14 @@ public:
     double compliance() const;
     /** @return Measured airway resistance in cmH2O/(L/s). */
     double resistance() const;
+    /** @return Measured expired tidal volume in mL. */
+    double vte() const;
+    /** @return Total respiratory frequency in breaths/min. */
+    double ftotal() const;
+    /** @return Expiratory time constant in seconds. */
+    double rcexp() const;
+    /** @return Measured expired minute volume in L/min. */
+    double expMinVol() const;
     /** @return Rolling pressure waveform sample buffer. */
     QVariantList pressureWaveform() const;
     /** @return Rolling flow waveform sample buffer. */
@@ -163,6 +175,10 @@ private:
     double m_etco2 = 0;
     double m_compliance = 0;
     double m_resistance = 0;
+    double m_vte = 0;
+    double m_ftotal = 0;
+    double m_rcexp = 0;
+    double m_expMinVol = 0;
     double m_phase = 0;
     int m_sampleIndex = 0;
     int m_snapshotCounter = 0;

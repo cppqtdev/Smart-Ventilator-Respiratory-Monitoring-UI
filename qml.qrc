@@ -28,6 +28,7 @@
         <file>qml/screens/EventsScreen.qml</file>
         <file>qml/screens/ToolsScreen.qml</file>
         <file>qml/screens/LayoutScreen.qml</file>
+        <file>qml/screens/TargetScreen.qml</file>
         <file>qml/screens/ShutdownScreen.qml</file>
         <file>qml/screens/EmergencyScreen.qml</file>
         <file>qml/screens/LoginScreen.qml</file>

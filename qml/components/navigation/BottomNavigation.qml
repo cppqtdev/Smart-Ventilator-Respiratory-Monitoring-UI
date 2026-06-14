@@ -47,8 +47,8 @@ TabBar {
     }
 
     NavTabButton {
-        text: "Events"
-        screen: "events"
+        text: "Target"
+        screen: "target"
         onClicked: root.navigate(screen)
     }
 

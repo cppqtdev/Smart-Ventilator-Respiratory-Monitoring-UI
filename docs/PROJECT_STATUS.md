@@ -22,7 +22,7 @@ feature requirements documented in SCREEN_FLOW_TODO.md.
 | 2  | Standby / Patient Select| Complete    | Patient type, gender, presets, calibration action |
 | 3  | Patient Profile Setup   | Complete    | Age, height, weight sliders; IBW calculation      |
 | 4  | Mode Selection          | Complete    | 8-mode grid: ASV, SIMV, PCV, CPAP, BiPAP, PSV, PRVC |
-| 5  | Active Monitoring       | Complete    | 4 waveform channels, metrics panel, lung visual  |
+| 5  | Active Monitoring       | Complete    | 7 metrics (Ppeak, ExpMinVol, VTE, Ftotal, RCexp, PEEP, MV), 4 waveforms, parameter grid, lung visual |
 | 6  | Controls                | Complete    | 5 tabbed sections with pressure knob controls    |
 | 7  | Layout Presets          | Complete    | 5 layout options for monitoring arrangement      |
 | 8  | Events Timeline         | Complete    | SQLite-backed EventController model (2026-06-14) |
@@ -32,6 +32,7 @@ feature requirements documented in SCREEN_FLOW_TODO.md.
 | 12 | Shutdown / Safe Stop    | Complete    | Clinical stop confirmation screen (2026-06-14)   |
 | 13 | Emergency Mode          | Complete    | Streamlined waveform + vitals layout (2026-06-14)|
 | 14 | Login / Authentication  | Complete    | PIN-based login with role selection (2026-06-14) |
+| 15 | Target                  | Complete    | Target parameter settings screen (2026-06-14)   |
 
 
 ## 2. Reusable Component Library
@@ -241,3 +242,9 @@ compliance status is assessed below.
 | 2026-06-14 | --     | Created ScreenLockOverlay with configurable inactivity timeout|
 | 2026-06-14 | --     | Made ClockController timezone configurable via IANA identifiers|
 | 2026-06-14 | --     | Completed Doxygen @param/@return docs for all C++ public APIs |
+| 2026-06-14 | --     | Added VTE, Ftotal, RCexp, ExpMinVol metrics to VentilatorController |
+| 2026-06-14 | --     | Added high/low range sub-values to MetricTile (per Behance)   |
+| 2026-06-14 | --     | Updated MonitoringScreen to 7-metric Behance layout           |
+| 2026-06-14 | --     | Added compact parameter grid (Pconf, Rate, PetCO2, Cstat)    |
+| 2026-06-14 | --     | Created TargetScreen for target parameter settings            |
+| 2026-06-14 | --     | Replaced Events with Target in bottom navigation bar          |

@@ -41,6 +41,10 @@ double VentilatorController::spo2() const { return m_spo2; }
 double VentilatorController::etco2() const { return m_etco2; }
 double VentilatorController::compliance() const { return m_compliance; }
 double VentilatorController::resistance() const { return m_resistance; }
+double VentilatorController::vte() const { return m_vte; }
+double VentilatorController::ftotal() const { return m_ftotal; }
+double VentilatorController::rcexp() const { return m_rcexp; }
+double VentilatorController::expMinVol() const { return m_expMinVol; }
 QVariantList VentilatorController::pressureWaveform() const { return m_pressureWaveform; }
 QVariantList VentilatorController::flowWaveform() const { return m_flowWaveform; }
 QVariantList VentilatorController::volumeWaveform() const { return m_volumeWaveform; }
@@ -68,6 +72,7 @@ void VentilatorController::stopVentilation()
     m_volumeWaveform.clear();
     m_co2Waveform.clear();
     m_ppeak = m_pplat = m_pmean = m_spo2 = m_etco2 = m_compliance = m_resistance = 0;
+    m_vte = m_ftotal = m_rcexp = m_expMinVol = 0;
     if (m_database)
         m_database->logEvent(QStringLiteral("Ventilation"), QStringLiteral("Ventilation stopped"), QStringLiteral("Standby"));
     emit runningChanged();
@@ -215,6 +220,14 @@ void VentilatorController::updateSimulation()
     m_etco2 = qRound(clampDouble(31.0 + std::sin(m_sampleIndex * 0.018) * 3.0 - (m_minuteVolume - 100.0) * 0.025, 18, 55));
     m_compliance = qRound(clampDouble(m_tidalVolume / qMax(1.0, m_pplat - m_peep) + std::sin(m_sampleIndex * 0.017) * 4.0, 12, 95));
     m_resistance = qRound(clampDouble(8.0 + m_trigger * 0.8 + std::sin(m_sampleIndex * 0.029) * 2.0, 3, 28));
+
+    // Derived respiratory mechanics (per Behance design metrics)
+    m_vte = qRound(clampDouble(m_tidalVolume * (0.92 + std::sin(m_sampleIndex * 0.023) * 0.06), 50, 900));
+    m_ftotal = qRound(clampDouble(rr + std::sin(m_sampleIndex * 0.019) * 1.5, 4, 60));
+    m_rcexp = clampDouble(m_compliance * m_resistance / 1000.0 + std::sin(m_sampleIndex * 0.031) * 0.08, 0.1, 2.5);
+    m_rcexp = std::round(m_rcexp * 100.0) / 100.0;
+    m_expMinVol = clampDouble(m_vte * m_ftotal / 1000.0, 0.5, 30.0);
+    m_expMinVol = std::round(m_expMinVol * 10.0) / 10.0;
     const double co2 = inspiration
         ? qMax(0.0, m_etco2 * std::exp(-normalized * 6.0) - 2.0)
         : m_etco2 * (1.0 - std::exp(-normalized * 8.0)) + std::sin(m_sampleIndex * 0.08);
