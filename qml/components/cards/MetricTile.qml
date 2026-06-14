@@ -15,14 +15,35 @@ Panel {
     property string highValue: ""
     property string lowValue: ""
     property string trend: ""
-    color: state === "critical" ? Colors.critical : Colors.surface
+    color: root.state === "critical" ? Colors.critical
+         : root.state === "warning" ? Colors.warningBackground
+         : Colors.surface
     clip: true
 
+    // Flashing border for active alarm states
+    border.color: root.state === "critical" ? Colors.critical
+                : root.state === "warning" ? Colors.warning
+                : Colors.line
+    border.width: root.state === "normal" ? 1 : 2
+
+    SequentialAnimation on opacity {
+        running: root.state === "critical"
+        loops: Animation.Infinite
+        NumberAnimation { to: 0.6; duration: 500; easing.type: Easing.InOutQuad }
+        NumberAnimation { to: 1.0; duration: 500; easing.type: Easing.InOutQuad }
+    }
+
+    // Reset opacity when alarm clears
+    onStateChanged: {
+        if (root.state === "normal")
+            root.opacity = 1.0
+    }
+
     // Accessibility: shape indicator alongside color for color-blind users.
-    // Triangle for critical, no shape for normal.
+    // Triangle for critical, diamond for warning.
     Canvas {
         id: severityIndicator
-        visible: root.state === "critical"
+        visible: root.state !== "normal"
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.leftMargin: 8
@@ -34,11 +55,26 @@ Panel {
             ctx.clearRect(0, 0, width, height)
             ctx.fillStyle = Colors.textPrimary.toString()
             ctx.beginPath()
-            ctx.moveTo(width / 2, 0)
-            ctx.lineTo(width, height)
-            ctx.lineTo(0, height)
+            if (root.state === "critical") {
+                // Triangle for critical
+                ctx.moveTo(width / 2, 0)
+                ctx.lineTo(width, height)
+                ctx.lineTo(0, height)
+            } else {
+                // Diamond for warning
+                ctx.moveTo(width / 2, 0)
+                ctx.lineTo(width, height / 2)
+                ctx.lineTo(width / 2, height)
+                ctx.lineTo(0, height / 2)
+            }
             ctx.closePath()
             ctx.fill()
+        }
+        Connections {
+            target: root
+            function onStateChanged() {
+                severityIndicator.requestPaint()
+            }
         }
     }
 

@@ -14,8 +14,9 @@ import "../components/buttons"
 
 Control {
     id: root
-    property int selectedLayout: 1
-    property int appliedLayout: 1
+    property var appSettingsData
+    property int selectedLayout: root.appSettingsData
+        ? root.appSettingsData.monitoringLayout : 1
 
     readonly property var layoutNames: [
         "Standard",
@@ -59,7 +60,9 @@ Control {
             Item { width: 20; height: 1 }
 
             Text {
-                text: "Active: " + root.layoutNames[root.appliedLayout - 1]
+                property int applied: root.appSettingsData
+                    ? root.appSettingsData.monitoringLayout : 1
+                text: "Active: " + root.layoutNames[applied - 1]
                 color: Colors.successBright
                 font.pixelSize: Typography.body
                 font.weight: Font.DemiBold
@@ -69,13 +72,19 @@ Control {
             Item { Layout.fillWidth: true; width: 10; height: 1 }
 
             PrimaryButton {
+                property int applied: root.appSettingsData
+                    ? root.appSettingsData.monitoringLayout : 1
                 width: 200
                 height: 48
-                text: root.selectedLayout === root.appliedLayout
+                text: root.selectedLayout === applied
                     ? "Applied" : "Apply Layout"
-                buttonColor: root.selectedLayout === root.appliedLayout
+                buttonColor: root.selectedLayout === applied
                     ? Colors.disabled : Colors.accentBlue
-                onClicked: root.appliedLayout = root.selectedLayout
+                onClicked: {
+                    if (root.appSettingsData)
+                        root.appSettingsData.monitoringLayout
+                            = root.selectedLayout
+                }
             }
         }
 
@@ -120,7 +129,9 @@ Control {
                             width: parent.width
                             height: 160
                             radius: Radius.small
-                            color: root.appliedLayout === layoutDelegate.index + 1
+                            color: root.appSettingsData
+                                && root.appSettingsData.monitoringLayout
+                                    === layoutDelegate.index + 1
                                 ? Colors.surfaceRaised : "transparent"
                             border.color: root.selectedLayout
                                 === layoutDelegate.index + 1

@@ -143,7 +143,9 @@ Control {
                         ? root.ventilatorData.spo2 : 0
                     unit: "%"
                     state: root.ventilatorData
-                        && root.ventilatorData.spo2 < 90
+                        && root.ventilatorData.spo2 > 0
+                        && root.ventilatorData.spo2
+                            < root.ventilatorData.alarmLowSpo2
                         ? "critical" : "normal"
                 }
 
@@ -154,6 +156,9 @@ Control {
                     value: root.ventilatorData
                         ? root.ventilatorData.etco2 : 0
                     unit: "mmHg"
+                    state: root.ventilatorData
+                        && root.ventilatorData.etco2 > 50
+                        ? "warning" : "normal"
                 }
 
                 MetricTile {
@@ -173,7 +178,8 @@ Control {
                         ? root.ventilatorData.minuteVolume : 0
                     unit: "%"
                     state: root.ventilatorData
-                        && root.ventilatorData.minuteVolume > 145
+                        && root.ventilatorData.minuteVolume
+                            > root.ventilatorData.alarmHighMv * 10
                         ? "critical" : "normal"
                 }
             }

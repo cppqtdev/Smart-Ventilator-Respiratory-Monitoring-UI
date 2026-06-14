@@ -17,6 +17,14 @@ Control {
     property var patientData
     property var ventilatorData
     property var alarmData
+    property int layoutPreset: 1
+
+    // Layout presets control waveform visibility:
+    // 1 = Standard (Paw only in main area)
+    // 2 = Dual (Paw + Flow)
+    // 3 = Triple (Paw + Flow + Volume)
+    // 4 = Quad (Paw + Flow + Volume + CO2)
+    // 5 = Full (all waveforms + lung + params)
 
     RowLayout {
         anchors.fill: parent
@@ -35,9 +43,10 @@ Control {
                 label: "Ppeak"
                 value: root.ventilatorData.ppeak
                 unit: "cmH2O"
-                highValue: "40"
-                lowValue: "5"
-                state: root.ventilatorData.ppeak > root.ventilatorData.alarmHighPressure
+                highValue: root.ventilatorData.alarmHighPressure
+                lowValue: root.ventilatorData.alarmLowPressure
+                state: root.ventilatorData.ppeak
+                    > root.ventilatorData.alarmHighPressure
                     ? "critical" : "normal"
             }
             MetricTile {
@@ -46,8 +55,11 @@ Control {
                 label: "ExpMinVol"
                 value: root.ventilatorData.expMinVol
                 unit: "L/min"
-                highValue: "19.9"
-                lowValue: "10.0"
+                highValue: root.ventilatorData.alarmHighMv
+                lowValue: "1.0"
+                state: root.ventilatorData.expMinVol
+                    > root.ventilatorData.alarmHighMv
+                    ? "warning" : "normal"
             }
             MetricTile {
                 width: parent.width
@@ -56,7 +68,10 @@ Control {
                 value: root.ventilatorData.vte
                 unit: "mL"
                 highValue: "839"
-                lowValue: "288"
+                lowValue: root.ventilatorData.alarmLowVt
+                state: root.ventilatorData.vte
+                    < root.ventilatorData.alarmLowVt
+                    ? "warning" : "normal"
             }
             MetricTile {
                 width: parent.width
@@ -89,7 +104,9 @@ Control {
                 label: "Minute Vol"
                 value: root.ventilatorData.minuteVolume
                 unit: "%"
-                state: root.ventilatorData.minuteVolume > 145
+                highValue: root.ventilatorData.alarmHighMv * 10
+                state: root.ventilatorData.minuteVolume
+                    > root.ventilatorData.alarmHighMv * 10
                     ? "critical" : "normal"
             }
         }
@@ -116,9 +133,21 @@ Control {
                         id: waveformColumn
                         spacing: 16
 
+                        // Waveform height adapts to share available space
+                        property int visibleWaveforms:
+                            (root.layoutPreset >= 1 ? 1 : 0)
+                            + (root.layoutPreset >= 2 ? 1 : 0)
+                            + (root.layoutPreset >= 3 ? 1 : 0)
+                            + (root.layoutPreset >= 4 ? 1 : 0)
+                        property real waveHeight: Math.max(
+                            100,
+                            waveformFlickable.height * 0.20
+                                / Math.max(1, visibleWaveforms)
+                                * visibleWaveforms)
+
                         WaveformChart {
                             width: parent.width
-                            height: Math.max(130, waveformFlickable.height * 0.20)
+                            height: waveformColumn.waveHeight
                             title: "Pressure Paw"
                             traceColor: Colors.success
                             samples: root.ventilatorData.pressureWaveform
@@ -126,8 +155,9 @@ Control {
                             maximumValue: 45
                         }
                         WaveformChart {
+                            visible: root.layoutPreset >= 2
                             width: parent.width
-                            height: Math.max(130, waveformFlickable.height * 0.20)
+                            height: visible ? waveformColumn.waveHeight : 0
                             title: "Flow"
                             traceColor: Colors.magenta
                             samples: root.ventilatorData.flowWaveform
@@ -135,8 +165,9 @@ Control {
                             maximumValue: 85
                         }
                         WaveformChart {
+                            visible: root.layoutPreset >= 3
                             width: parent.width
-                            height: Math.max(130, waveformFlickable.height * 0.20)
+                            height: visible ? waveformColumn.waveHeight : 0
                             title: "Volume"
                             traceColor: Colors.warning
                             samples: root.ventilatorData.volumeWaveform
@@ -144,15 +175,16 @@ Control {
                             maximumValue: 90
                         }
                         WaveformChart {
+                            visible: root.layoutPreset >= 4
                             width: parent.width
-                            height: Math.max(130, waveformFlickable.height * 0.20)
+                            height: visible ? waveformColumn.waveHeight : 0
                             title: "PCO2"
                             traceColor: Colors.accentBlue
                             samples: root.ventilatorData.co2Waveform
                             minimumValue: 0
                             maximumValue: 50
                         }
-                        // Compact parameter grid per Behance design
+                        // Compact parameter grid
                         Row {
                             width: parent.width
                             height: 56
@@ -225,6 +257,8 @@ Control {
                                     label: "EtCO2"
                                     value: root.ventilatorData.etco2
                                     unit: "mmHg"
+                                    state: root.ventilatorData.etco2 > 50
+                                        ? "warning" : "normal"
                                 }
                                 MetricTile {
                                     width: (parent.width - 14) / 2
@@ -232,6 +266,10 @@ Control {
                                     label: "SpO2"
                                     value: root.ventilatorData.spo2
                                     unit: "%"
+                                    state: root.ventilatorData.spo2 > 0
+                                        && root.ventilatorData.spo2
+                                            < root.ventilatorData.alarmLowSpo2
+                                        ? "critical" : "normal"
                                 }
                                 MetricTile {
                                     width: (parent.width - 14) / 2

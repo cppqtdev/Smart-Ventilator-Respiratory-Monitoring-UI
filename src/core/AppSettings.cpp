@@ -41,6 +41,11 @@ QString AppSettings::timeZoneId() const
     return m_settings.value(QStringLiteral("ui/timeZoneId"), QStringLiteral("Asia/Kolkata")).toString();
 }
 
+int AppSettings::monitoringLayout() const
+{
+    return m_settings.value(QStringLiteral("ui/monitoringLayout"), 1).toInt();
+}
+
 void AppSettings::setOperatingHours(double hours)
 {
     if (qFuzzyCompare(operatingHours(), hours))
@@ -87,4 +92,13 @@ void AppSettings::setTimeZoneId(const QString &value)
         return;
     m_settings.setValue(QStringLiteral("ui/timeZoneId"), value);
     emit timeZoneIdChanged();
+}
+
+void AppSettings::setMonitoringLayout(int value)
+{
+    value = qBound(1, value, 5);
+    if (monitoringLayout() == value)
+        return;
+    m_settings.setValue(QStringLiteral("ui/monitoringLayout"), value);
+    emit monitoringLayoutChanged();
 }

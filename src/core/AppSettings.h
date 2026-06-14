@@ -19,6 +19,7 @@ class AppSettings : public QObject
     Q_PROPERTY(QString language READ language WRITE setLanguage NOTIFY languageChanged)
     Q_PROPERTY(QString dayNightMode READ dayNightMode WRITE setDayNightMode NOTIFY dayNightModeChanged)
     Q_PROPERTY(QString timeZoneId READ timeZoneId WRITE setTimeZoneId NOTIFY timeZoneIdChanged)
+    Q_PROPERTY(int monitoringLayout READ monitoringLayout WRITE setMonitoringLayout NOTIFY monitoringLayoutChanged)
 
 public:
     explicit AppSettings(QObject *parent = nullptr);
@@ -37,6 +38,8 @@ public:
     QString dayNightMode() const;
     /** @return Persisted IANA timezone identifier. */
     QString timeZoneId() const;
+    /** @return Active monitoring layout preset (1-5). */
+    int monitoringLayout() const;
 
 public slots:
     /** @param hours Accumulated operating hours to store. */
@@ -51,6 +54,8 @@ public slots:
     void setDayNightMode(const QString &value);
     /** @param value IANA timezone identifier to persist. */
     void setTimeZoneId(const QString &value);
+    /** @param value Monitoring layout preset (1-5). */
+    void setMonitoringLayout(int value);
 
 signals:
     void operatingHoursChanged();
@@ -59,6 +64,7 @@ signals:
     void languageChanged();
     void dayNightModeChanged();
     void timeZoneIdChanged();
+    void monitoringLayoutChanged();
 
 private:
     QSettings m_settings;

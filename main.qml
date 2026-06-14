@@ -197,6 +197,7 @@ ApplicationWindow {
             patientData: patientModel
             ventilatorData: ventilatorModel
             alarmData: alarmModel
+            layoutPreset: appSettings.monitoringLayout
         }
     }
 
@@ -242,7 +243,9 @@ ApplicationWindow {
 
     Component {
         id: layoutScreen
-        LayoutScreen {}
+        LayoutScreen {
+            appSettingsData: appSettings
+        }
     }
 
     Component {
