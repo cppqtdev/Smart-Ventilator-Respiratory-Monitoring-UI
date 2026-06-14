@@ -1,0 +1,182 @@
+// -----------------------------------------------------------------------
+// File: EmergencyScreen.qml
+// Description: Streamlined emergency mode display with focused vital data
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
+import QtQuick
+import QtQuick.Controls.Basic
+import QtQuick.Layouts
+
+import "../styles"
+import "../components/cards"
+import "../components/charts"
+import "../components/buttons"
+
+Control {
+    id: root
+
+    property var ventilatorData
+    property var alarmData
+
+    signal exitEmergency()
+
+    contentItem: ColumnLayout {
+        spacing: Spacing.screenMargin_8
+
+        // Emergency banner
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 64
+            radius: Radius.small
+            color: Colors.critical
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 24
+                anchors.rightMargin: 24
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "EMERGENCY MODE"
+                    color: Colors.textPrimary
+                    font.pixelSize: Typography.title
+                    font.weight: Font.DemiBold
+                }
+
+                PrimaryButton {
+                    Layout.preferredWidth: 180
+                    Layout.preferredHeight: 44
+                    text: "Exit Emergency"
+                    buttonColor: Colors.warningBackground
+                    onClicked: root.exitEmergency()
+                }
+            }
+        }
+
+        // Main content: large waveforms and critical vitals side by side
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: Spacing.screenMargin_8
+
+            // Waveforms (left, dominant area)
+            Panel {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: Spacing.screenMargin_10
+                    spacing: Spacing.screenMargin_6
+
+                    WaveformChart {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        title: "Pressure Paw"
+                        traceColor: Colors.success
+                        samples: root.ventilatorData
+                            ? root.ventilatorData.pressureWaveform
+                            : []
+                        minimumValue: 0
+                        maximumValue: 45
+                    }
+
+                    WaveformChart {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        title: "Flow"
+                        traceColor: Colors.magenta
+                        samples: root.ventilatorData
+                            ? root.ventilatorData.flowWaveform
+                            : []
+                        minimumValue: -85
+                        maximumValue: 85
+                    }
+
+                    WaveformChart {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        title: "Volume"
+                        traceColor: Colors.warning
+                        samples: root.ventilatorData
+                            ? root.ventilatorData.volumeWaveform
+                            : []
+                        minimumValue: 0
+                        maximumValue: 90
+                    }
+                }
+            }
+
+            // Critical vitals (right, narrow column)
+            ColumnLayout {
+                Layout.preferredWidth: 260
+                Layout.fillHeight: true
+                spacing: Spacing.screenMargin_8
+
+                MetricTile {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    label: "Ppeak"
+                    value: root.ventilatorData
+                        ? root.ventilatorData.ppeak : 0
+                    unit: "cmH2O"
+                    state: root.ventilatorData
+                        && root.ventilatorData.ppeak > 42
+                        ? "critical" : "normal"
+                }
+
+                MetricTile {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    label: "PEEP"
+                    value: root.ventilatorData
+                        ? root.ventilatorData.peep : 0
+                    unit: "cmH2O"
+                }
+
+                MetricTile {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    label: "SpO2"
+                    value: root.ventilatorData
+                        ? root.ventilatorData.spo2 : 0
+                    unit: "%"
+                    state: root.ventilatorData
+                        && root.ventilatorData.spo2 < 90
+                        ? "critical" : "normal"
+                }
+
+                MetricTile {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    label: "EtCO2"
+                    value: root.ventilatorData
+                        ? root.ventilatorData.etco2 : 0
+                    unit: "mmHg"
+                }
+
+                MetricTile {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    label: "FiO2"
+                    value: root.ventilatorData
+                        ? root.ventilatorData.fio2 : 0
+                    unit: "%"
+                }
+
+                MetricTile {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    label: "Minute Vol"
+                    value: root.ventilatorData
+                        ? root.ventilatorData.minuteVolume : 0
+                    unit: "%"
+                    state: root.ventilatorData
+                        && root.ventilatorData.minuteVolume > 145
+                        ? "critical" : "normal"
+                }
+            }
+        }
+    }
+}

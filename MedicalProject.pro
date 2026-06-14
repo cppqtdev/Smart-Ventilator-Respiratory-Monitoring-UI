@@ -10,6 +10,7 @@ SOURCES += \
         src/core/DatabaseManager.cpp \
         src/controllers/AlarmController.cpp \
         src/controllers/ClockController.cpp \
+        src/controllers/EventController.cpp \
         src/controllers/PatientController.cpp \
         src/controllers/VentilatorController.cpp
 
@@ -18,6 +19,7 @@ HEADERS += \
         src/core/DatabaseManager.h \
         src/controllers/AlarmController.h \
         src/controllers/ClockController.h \
+        src/controllers/EventController.h \
         src/controllers/PatientController.h \
         src/controllers/VentilatorController.h
 

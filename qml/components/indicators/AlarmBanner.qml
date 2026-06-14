@@ -1,3 +1,8 @@
+// -----------------------------------------------------------------------
+// File: AlarmBanner.qml
+// Description: Critical and warning alarm notification banner
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
@@ -33,8 +38,8 @@ Control {
             contentItem: Text {
                 text: headline
                 color: Colors.textPrimary
-                font.pixelSize: 19
-                font.bold: true
+                font.pixelSize: Typography.label
+                font.weight: Font.DemiBold
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
             }
@@ -58,8 +63,8 @@ Control {
 
                 text: detail
                 color: Colors.textPrimary
-                font.pixelSize: 19
-                font.bold: true
+                font.pixelSize: Typography.label
+                font.weight: Font.DemiBold
             }
         }
     }

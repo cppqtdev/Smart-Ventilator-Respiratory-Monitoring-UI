@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QAbstractListModel>
+#include <QTimer>
 #include <QVector>
 
 class DatabaseManager;
@@ -18,6 +19,8 @@ class AlarmController : public QAbstractListModel
     Q_PROPERTY(QString priority READ priority WRITE setPriority NOTIFY bannerChanged)
     Q_PROPERTY(QString headline READ headline WRITE setHeadline NOTIFY bannerChanged)
     Q_PROPERTY(QString detail READ detail WRITE setDetail NOTIFY bannerChanged)
+    Q_PROPERTY(bool silenced READ silenced NOTIFY silenceChanged)
+    Q_PROPERTY(int silenceRemaining READ silenceRemaining NOTIFY silenceChanged)
 
 public:
     enum AlarmRoles {
@@ -28,10 +31,17 @@ public:
         StatusRole
     };
 
+    /**
+     * @param database  Shared database manager for alarm persistence.
+     * @param parent  Optional QObject parent for ownership.
+     */
     explicit AlarmController(DatabaseManager *database, QObject *parent = nullptr);
 
+    /** @return Number of alarm rows in the model. */
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    /** @return Data for the given alarm row and role. */
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    /** @return Mapping of AlarmRoles to QML role name strings. */
     QHash<int, QByteArray> roleNames() const override;
 
     bool active() const;
@@ -39,7 +49,28 @@ public:
     QString headline() const;
     QString detail() const;
 
+    /** @brief Clears the active alarm banner and marks the top alarm as acknowledged. */
     Q_INVOKABLE void acknowledgeActiveAlarm();
+
+    /**
+     * @brief Activates alarm silence for the specified duration.
+     * @param durationSeconds  Silence period in seconds (default 120, per IEC 60601-1-8).
+     */
+    Q_INVOKABLE void silenceAlarms(int durationSeconds = 120);
+
+    /** @brief Cancels an active alarm silence period. */
+    Q_INVOKABLE void cancelSilence();
+
+    bool silenced() const;
+    int silenceRemaining() const;
+
+    /**
+     * @brief Inserts a new alarm row into the model and persists it to the database.
+     * @param priority  Alarm severity ("Critical", "Warning", or "Info").
+     * @param source  Subsystem that raised the alarm (e.g. "Pressure").
+     * @param description  Human-readable alarm detail.
+     * @param status  Initial alarm state ("Active", "Acknowledged").
+     */
     Q_INVOKABLE void addAlarm(const QString &priority,
                               const QString &source,
                               const QString &description,
@@ -53,6 +84,7 @@ public slots:
 
 signals:
     void bannerChanged();
+    void silenceChanged();
 
 private:
     struct AlarmRow {
@@ -63,10 +95,15 @@ private:
         QString status;
     };
 
+    static int priorityWeight(const QString &priority);
+
     QVector<AlarmRow> m_rows;
     DatabaseManager *m_database = nullptr;
     bool m_active = false;
     QString m_priority = QStringLiteral("Normal");
     QString m_headline = QStringLiteral("No Active Alarms");
     QString m_detail = QStringLiteral("System normal");
+    bool m_silenced = false;
+    int m_silenceRemaining = 0;
+    QTimer m_silenceTimer;
 };

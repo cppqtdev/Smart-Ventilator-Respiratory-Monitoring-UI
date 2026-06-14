@@ -1,9 +1,9 @@
 PROJECT_NAME           = "Smart Ventilator Respiratory Monitoring UI"
 PROJECT_BRIEF          = "Qt/QML ICU ventilator demo with C++ controllers, SQLite logging and QSettings persistence"
 OUTPUT_DIRECTORY       = docs
-INPUT                  = src main.cpp
+INPUT                  = src main.cpp qml
 RECURSIVE              = YES
-FILE_PATTERNS          = *.h *.cpp
+FILE_PATTERNS          = *.h *.cpp *.qml
 EXTRACT_ALL            = YES
 EXTRACT_PRIVATE        = NO
 GENERATE_HTML          = YES
@@ -11,6 +11,7 @@ GENERATE_LATEX         = NO
 HAVE_DOT               = NO
 QUIET                  = YES
 WARN_IF_UNDOCUMENTED   = YES
-WARN_NO_PARAMDOC       = NO
+WARN_NO_PARAMDOC       = YES
 JAVADOC_AUTOBRIEF      = YES
 QT_AUTOBRIEF           = YES
+EXTENSION_MAPPING      = qml=JavaScript

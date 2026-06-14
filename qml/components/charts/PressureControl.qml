@@ -1,7 +1,14 @@
+// -----------------------------------------------------------------------
+// File: PressureControl.qml
+// Description: Circular pressure gauge with ring progress
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Shapes
+
+import "../../styles"
 
 Item {
     id: root
@@ -17,8 +24,8 @@ Item {
     property string unitText: "cmH2O"
 
     // Ring styling
-    property color progressColor: "#2497FF"
-    property color trackColor: "#647391"
+    property color progressColor: Colors.progressBlue
+    property color trackColor: Colors.track
     property real ringThickness: 32
     property real ringPadding: 8
     property bool roundedCaps: true
@@ -32,7 +39,7 @@ Item {
     property bool valueBold: false
 
     // Unit text styling
-    property color unitColor: "#7C8AA6"
+    property color unitColor: Colors.textSubtle
     property int unitPixelSize: 34
     property bool unitBold: false
 

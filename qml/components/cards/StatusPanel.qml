@@ -1,3 +1,8 @@
+// -----------------------------------------------------------------------
+// File: StatusPanel.qml
+// Description: Combined ventilation mode and patient category display
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
@@ -41,8 +46,8 @@ Control {
                     color: Colors.textPrimary
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
-                    font.bold: true
-                    font.pixelSize: 26
+                    font.weight: Font.DemiBold
+                    font.pixelSize: Typography.subtitle
                 }
 
                 Control {
@@ -63,7 +68,7 @@ Control {
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         font.weight: Font.DemiBold
-                        font.pixelSize: 14
+                        font.pixelSize: Typography.caption
                     }
                 }
             }
@@ -77,7 +82,7 @@ Control {
                 anchors.centerIn: parent
                 text: root.patientCategory.charAt(0)
                 color: Colors.textBackground
-                font.pixelSize: 23
+                font.pixelSize: Typography.bodyLarge
                 font.weight: Font.DemiBold
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter

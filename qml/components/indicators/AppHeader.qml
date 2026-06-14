@@ -1,4 +1,9 @@
-import QtQuick 2.15
+// -----------------------------------------------------------------------
+// File: AppHeader.qml
+// Description: Top application header bar with mode, patient info, clock, and alarm status
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
+import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls.Basic
 

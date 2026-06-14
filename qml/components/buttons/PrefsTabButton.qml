@@ -1,11 +1,16 @@
-import QtQuick 2.15
+// -----------------------------------------------------------------------
+// File: PrefsTabButton.qml
+// Description: Toggle-style tab selection button
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
+import QtQuick
 import QtQuick.Controls.Basic
 import "../../styles"
 
 TabButton {
     id: control
-    font.family: "Courier New"
-    font.pixelSize: 18
+    font.family: Typography.monoFamily
+    font.pixelSize: Typography.label
     font.bold: Font.DemiBold
 
     property color bgColor: checked ? Colors.accentBlue : Colors.disabled

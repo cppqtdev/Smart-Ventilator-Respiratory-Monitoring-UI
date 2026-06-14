@@ -1,4 +1,9 @@
-import QtQuick 2.15
+// -----------------------------------------------------------------------
+// File: PrimaryButton.qml
+// Description: Styled action button with configurable color
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
+import QtQuick
 import QtQuick.Controls.Basic
 import "../../styles"
 
@@ -6,9 +11,9 @@ Button {
     id: root
     property color buttonColor: Colors.success
 
-    font.pixelSize: 18
-    font.bold: true
-    font.family: "Courier New"
+    font.pixelSize: Typography.label
+    font.weight: Font.DemiBold
+    font.family: Typography.monoFamily
 
     background: Rectangle {
         implicitHeight: 48

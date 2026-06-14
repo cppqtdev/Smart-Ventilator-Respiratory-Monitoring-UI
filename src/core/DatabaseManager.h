@@ -30,6 +30,9 @@ public:
 
     /**
      * @brief Records a user/system event in the audit log.
+     * @param source  Subsystem that generated the event (e.g. "Mode", "Parameter").
+     * @param description  Human-readable event detail.
+     * @param status  Recording status label (default "Recorded").
      */
     Q_INVOKABLE void logEvent(const QString &source,
                               const QString &description,
@@ -37,6 +40,10 @@ public:
 
     /**
      * @brief Records an alarm transition in the alarm history table.
+     * @param priority  Alarm severity ("Critical", "Warning", or "Info").
+     * @param source  Subsystem that raised the alarm.
+     * @param description  Human-readable alarm detail.
+     * @param status  Current alarm state ("Active", "Acknowledged", "Resolved").
      */
     Q_INVOKABLE void logAlarm(const QString &priority,
                               const QString &source,
@@ -45,6 +52,7 @@ public:
 
     /**
      * @brief Stores a ventilator parameter snapshot for demo trend/history use.
+     * @param snapshot  Key-value map of parameter names to current values.
      */
     void saveParameterSnapshot(const QVariantMap &snapshot);
 

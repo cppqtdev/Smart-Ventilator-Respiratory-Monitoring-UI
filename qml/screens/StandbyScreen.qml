@@ -1,6 +1,11 @@
 pragma ComponentBehavior: Bound
+// -----------------------------------------------------------------------
+// File: StandbyScreen.qml
+// Description: Patient selection, gender, presets, and calibration actions
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
 
-import QtQuick 2.15
+import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
 
@@ -43,7 +48,7 @@ Item {
                     anchors.margins: 24
                     height: Math.max(150, parent.height * 0.23)
                     radius: Radius.medium
-                    color: "#276CB8"
+                    color: Colors.accentBlueMedium
                     clip: true
 
                     Column {
@@ -56,9 +61,9 @@ Item {
                             text: "00:05:10"
                             color: Colors.textPrimary
                             horizontalAlignment: Text.AlignHCenter
-                            font.family: "Courier New"
+                            font.family: Typography.monoFamily
                             font.pixelSize: Math.max(34, Math.min(56, standbyBanner.height * 0.28))
-                            font.bold: true
+                            font.weight: Font.DemiBold
                             minimumPixelSize: 28
                             fontSizeMode: Text.Fit
                         }
@@ -68,7 +73,7 @@ Item {
                             text: "No ventilation delivered to the patient.\nDeactivate humidifier during standby."
                             color: Colors.textPrimary
                             horizontalAlignment: Text.AlignHCenter
-                            font.family: "Courier New"
+                            font.family: Typography.monoFamily
                             font.pixelSize: Math.max(20, Math.min(30, standbyBanner.height * 0.16))
                             wrapMode: Text.WordWrap
                             lineHeight: 1.1
@@ -85,7 +90,7 @@ Item {
                     anchors.margins: 24
                     radius: Radius.small
                     color: "transparent"
-                    border.color: "#95A1B7"
+                    border.color: Colors.border
                     border.width: 2
                     clip: true
 
@@ -148,21 +153,21 @@ Item {
                                 PrefsTabButton {
                                     Layout.fillWidth: true
                                     text: "Adult/ped. 1"
-                                    bgColor: "#A9B0BA"
+                                    bgColor: Colors.buttonInactive
                                     onClicked: {}
                                 }
 
                                 PrefsTabButton {
                                     Layout.fillWidth: true
                                     text: "Adult/ped. 2"
-                                    bgColor: "#A9B0BA"
+                                    bgColor: Colors.buttonInactive
                                     onClicked: {}
                                 }
 
                                 PrefsTabButton {
                                     Layout.fillWidth: true
                                     text: "Adult/ped. 2"
-                                    bgColor: "#A9B0BA"
+                                    bgColor: Colors.buttonInactive
                                     onClicked: {}
                                 }
                             }
@@ -181,21 +186,23 @@ Item {
                                     Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
                                     text: root.patientData.gender === "Male" ? "\u2642" : "\u2640"
                                     color: Colors.textPrimary
-                                    font.pixelSize: 36
+                                    font.pixelSize: Typography.titleLarge
                                     horizontalAlignment: Text.AlignHCenter
                                 }
 
                                 PrefsTabButton {
                                     Layout.fillWidth: true
                                     text: "Male"
-                                    bgColor: root.patientData.gender === "Male" ? Colors.accentBlue : "#236AB2"
+                                    bgColor: root.patientData.gender === "Male"
+                                             ? Colors.accentBlue : Colors.accentBlueDark
                                     onClicked: root.patientData.gender = "Male"
                                 }
 
                                 PrefsTabButton {
                                     Layout.fillWidth: true
                                     text: "Female"
-                                    bgColor: root.patientData.gender === "Female" ? Colors.accentBlue : "#236AB2"
+                                    bgColor: root.patientData.gender === "Female"
+                                             ? Colors.accentBlue : Colors.accentBlueDark
                                     onClicked: root.patientData.gender = "Female"
                                 }
                             }
@@ -223,9 +230,9 @@ Item {
                                 width: parent.width
                                 text: "Pat. height"
                                 color: Colors.textPrimary
-                                font.family: "Courier New"
-                                font.pixelSize: 20
-                                font.bold: true
+                                font.family: Typography.monoFamily
+                                font.pixelSize: Typography.body
+                                font.weight: Font.DemiBold
                                 wrapMode: Text.WordWrap
                             }
 
@@ -233,8 +240,8 @@ Item {
                                 width: parent.width
                                 text: root.patientData.gender + "\nIBW: " + root.patientData.ibw + " kg"
                                 color: Colors.textSecondary
-                                font.family: "Courier New"
-                                font.pixelSize: 18
+                                font.family: Typography.monoFamily
+                                font.pixelSize: Typography.label
                                 wrapMode: Text.WordWrap
                                 lineHeight: 1.25
                             }

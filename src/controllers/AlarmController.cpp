@@ -8,7 +8,19 @@ AlarmController::AlarmController(DatabaseManager *database, QObject *parent)
     : QAbstractListModel(parent)
     , m_database(database)
 {
-    addAlarm(QStringLiteral("Info"), QStringLiteral("System"), QStringLiteral("Controller initialized"), QStringLiteral("Closed"));
+    m_silenceTimer.setInterval(1000);
+    connect(&m_silenceTimer, &QTimer::timeout, this, [this]() {
+        --m_silenceRemaining;
+        if (m_silenceRemaining <= 0) {
+            m_silenced = false;
+            m_silenceRemaining = 0;
+            m_silenceTimer.stop();
+        }
+        emit silenceChanged();
+    });
+
+    addAlarm(QStringLiteral("Info"), QStringLiteral("System"),
+             QStringLiteral("Controller initialized"), QStringLiteral("Closed"));
 }
 
 int AlarmController::rowCount(const QModelIndex &parent) const
@@ -110,4 +122,52 @@ void AlarmController::acknowledgeActiveAlarm()
     setPriority(QStringLiteral("Normal"));
     setHeadline(QStringLiteral("No Active Alarms"));
     setDetail(QStringLiteral("System normal"));
+}
+
+void AlarmController::silenceAlarms(int durationSeconds)
+{
+    // IEC 60601-1-8: Critical alarms must not be silenced for more than 120 seconds.
+    durationSeconds = qBound(10, durationSeconds, 120);
+    m_silenced = true;
+    m_silenceRemaining = durationSeconds;
+    m_silenceTimer.start();
+    emit silenceChanged();
+
+    if (m_database) {
+        m_database->logEvent(QStringLiteral("Alarm"),
+                             QStringLiteral("Alarm audio silenced for ")
+                                 + QString::number(durationSeconds)
+                                 + QStringLiteral(" seconds"));
+    }
+}
+
+void AlarmController::cancelSilence()
+{
+    if (!m_silenced)
+        return;
+    m_silenced = false;
+    m_silenceRemaining = 0;
+    m_silenceTimer.stop();
+    emit silenceChanged();
+
+    if (m_database) {
+        m_database->logEvent(QStringLiteral("Alarm"),
+                             QStringLiteral("Alarm silence cancelled by operator"));
+    }
+}
+
+bool AlarmController::silenced() const { return m_silenced; }
+int AlarmController::silenceRemaining() const { return m_silenceRemaining; }
+
+int AlarmController::priorityWeight(const QString &priority)
+{
+    // IEC 60601-1-8 alarm priority ranking.
+    // Higher weight = more urgent; used for arbitration when multiple alarms are active.
+    if (priority == QStringLiteral("Critical"))
+        return 3;
+    if (priority == QStringLiteral("Warning"))
+        return 2;
+    if (priority == QStringLiteral("Info"))
+        return 1;
+    return 0;
 }

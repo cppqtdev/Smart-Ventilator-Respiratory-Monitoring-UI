@@ -1,3 +1,8 @@
+// -----------------------------------------------------------------------
+// File: DateTimeBanner.qml
+// Description: Real-time clock display with battery and connectivity status icons
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
@@ -28,15 +33,15 @@ Control {
 
             Text {
                 text: clockData ? clockData.dateText : "--\n--"
-                color: "#9CA3AE"
-                font.pixelSize: 16
+                color: Colors.textMuted
+                font.pixelSize: Typography.small
             }
 
             Text {
                 text: clockData ? clockData.timeText : "-- --"
-                color: "#C2C5CB"
-                font.pixelSize: 19
-                font.bold: true
+                color: Colors.textLight
+                font.pixelSize: Typography.label
+                font.weight: Font.DemiBold
             }
         }
 
@@ -50,7 +55,7 @@ Control {
 
         Image {
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-            source: "qrc:/qml/assets/icons/chanrge.svg"
+            source: "qrc:/qml/assets/icons/charge.svg"
             sourceSize: Qt.size(47, 19)
         }
     }

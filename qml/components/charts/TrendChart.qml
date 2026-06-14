@@ -1,4 +1,9 @@
-import QtQuick 2.15
+// -----------------------------------------------------------------------
+// File: TrendChart.qml
+// Description: Trend line chart wrapper component
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
+import QtQuick
 import "../../styles"
 
 WaveformChart {

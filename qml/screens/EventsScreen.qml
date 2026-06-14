@@ -1,6 +1,11 @@
 pragma ComponentBehavior: Bound
+// -----------------------------------------------------------------------
+// File: EventsScreen.qml
+// Description: Chronological event timeline for mode changes, parameters, and alarms
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
 
-import QtQuick 2.15
+import QtQuick
 import QtQuick.Controls.Basic
 import "../styles"
 import "../components/cards"
@@ -8,6 +13,7 @@ import "../components/cards"
 Control {
     id: root
     property var alarmData
+    property var eventData
 
     padding: 24
 
@@ -25,8 +31,15 @@ Control {
             width: parent.width
             height: 48
             radius: Radius.small
-            color: "#079B66"
-            Text { anchors.centerIn: parent; text: "All Events"; color: Colors.textPrimary; font.family: "Courier New"; font.pixelSize: 18; font.bold: true }
+            color: Colors.successMuted
+            Text {
+                anchors.centerIn: parent
+                text: "All Events"
+                color: Colors.textPrimary
+                font.family: Typography.monoFamily
+                font.pixelSize: Typography.label
+                font.weight: Font.DemiBold
+            }
         }
 
         Flickable {
@@ -43,32 +56,56 @@ Control {
                 width: parent.width
 
                 Repeater {
-                    model: [
-                        ["13:27:04", "Mode", "Mode --> ASV", "normal"],
-                        ["13:27:04", "Parameter", "FiO2 changed to 60%", "normal"],
-                        ["13:27:04", "Parameter", "PEEP changed to 15 cmH2O", "normal"],
-                        ["13:27:04", "Alarm", "High Minute Volume", "critical"],
-                        ["13:27:04", "Alarm", "CT Low", "warning"],
-                        ["13:27:04", "System", "Sensor simulation started", "normal"],
-                        ["13:27:04", "Mode", "Mode --> SIMV", "normal"]
-                    ]
+                    model: root.eventData
+
                     Rectangle {
                         id: eventRow
-                        required property var modelData
+                        required property string time
+                        required property string source
+                        required property string description
+                        required property string severity
+
                         width: parent.width
                         height: 58
-                        color: modelData[3] === "critical" ? Colors.critical
-                             : modelData[3] === "warning" ? Colors.warning
-                             : "transparent"
+                        color: eventRow.severity === "critical"
+                            ? Colors.critical
+                            : eventRow.severity === "warning"
+                                ? Colors.warning
+                                : "transparent"
 
                         Row {
                             anchors.fill: parent
                             anchors.leftMargin: 24
                             anchors.rightMargin: 24
                             spacing: 30
-                            Text { width: 150; anchors.verticalCenter: parent.verticalCenter; text: eventRow.modelData[0]; color: Colors.textPrimary; font.family: "Courier New"; font.pixelSize: 22 }
-                            Text { width: 170; anchors.verticalCenter: parent.verticalCenter; text: eventRow.modelData[1]; color: Colors.textPrimary; font.family: "Courier New"; font.pixelSize: 22 }
-                            Text { width: parent.width - 390; anchors.verticalCenter: parent.verticalCenter; text: eventRow.modelData[2]; color: Colors.textPrimary; font.family: "Courier New"; font.pixelSize: 22; elide: Text.ElideRight }
+
+                            Text {
+                                width: 150
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: eventRow.time
+                                color: Colors.textPrimary
+                                font.family: Typography.monoFamily
+                                font.pixelSize: Typography.bodyLarge
+                            }
+
+                            Text {
+                                width: 170
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: eventRow.source
+                                color: Colors.textPrimary
+                                font.family: Typography.monoFamily
+                                font.pixelSize: Typography.bodyLarge
+                            }
+
+                            Text {
+                                width: parent.width - 390
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: eventRow.description
+                                color: Colors.textPrimary
+                                font.family: Typography.monoFamily
+                                font.pixelSize: Typography.bodyLarge
+                                elide: Text.ElideRight
+                            }
                         }
                     }
                 }

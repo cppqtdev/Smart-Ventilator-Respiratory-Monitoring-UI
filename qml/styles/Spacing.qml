@@ -1,5 +1,10 @@
 pragma Singleton
-import QtQuick 2.15
+// -----------------------------------------------------------------------
+// File: Spacing.qml
+// Description: Layout spacing and margin singleton
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
+import QtQuick
 
 QtObject {
     readonly property int screenMargin_10: 10

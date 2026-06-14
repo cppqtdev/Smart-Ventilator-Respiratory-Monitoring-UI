@@ -28,8 +28,10 @@
         <file>qml/screens/EventsScreen.qml</file>
         <file>qml/screens/ToolsScreen.qml</file>
         <file>qml/screens/LayoutScreen.qml</file>
+        <file>qml/screens/ShutdownScreen.qml</file>
+        <file>qml/screens/EmergencyScreen.qml</file>
         <file>qml/components/buttons/PrefsTabButton.qml</file>
-        <file>qml/assets/icons/chanrge.svg</file>
+        <file>qml/assets/icons/charge.svg</file>
         <file>qml/assets/icons/plug.svg</file>
         <file>qml/assets/icons/signal.svg</file>
         <file>qml/assets/icons/mic.svg</file>

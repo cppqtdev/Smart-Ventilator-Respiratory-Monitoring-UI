@@ -1,3 +1,8 @@
+// -----------------------------------------------------------------------
+// File: CircularKnob.qml
+// Description: Circular rotary knob for parameter adjustment
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
@@ -21,9 +26,9 @@ Control {
             id: labelText
             Layout.alignment: Qt.AlignLeft | Qt.AlignTop
             text: root.label
-            color: "#CDCFD5"
-            font.pixelSize: 21
-            font.bold: true
+            color: Colors.textLabel
+            font.pixelSize: Typography.body
+            font.weight: Font.DemiBold
         }
 
         Control {
@@ -56,7 +61,8 @@ Control {
                         ctx.stroke()
                         ctx.strokeStyle = Colors.accentBlue
                         ctx.beginPath()
-                        var end = -Math.PI / 2 + (Math.PI * 2 * (root.value - root.minimum) / (root.maximum - root.minimum))
+                        var ratio = (root.value - root.minimum) / (root.maximum - root.minimum)
+                        var end = -Math.PI / 2 + (Math.PI * 2 * ratio)
                         ctx.arc(cx, cy, r, -Math.PI / 2, end)
                         ctx.stroke()
                     }
@@ -72,21 +78,21 @@ Control {
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: root.value
-                            color: "#D7D9DC"
+                            color: Colors.textValue
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
-                            font.pixelSize: 34
+                            font.pixelSize: Typography.titleLarge
                             font.weight: Font.DemiBold
                         }
 
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: root.unit
-                            color: "#6C7586"
+                            color: Colors.textUnit
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
-                            font.pixelSize: 19
-                            font.bold: true
+                            font.pixelSize: Typography.label
+                            font.weight: Font.DemiBold
                         }
                     }
                 }
@@ -107,7 +113,7 @@ Control {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        radius: 7; color: "#236AB2"
+                        radius: 7; color: Colors.accentBlueDark
                         topRightRadius: 0
                         bottomRightRadius: 0
                     }
@@ -115,7 +121,7 @@ Control {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        radius: 7; color: "#236AB2"
+                        radius: 7; color: Colors.accentBlueDark
                         topLeftRadius: 0
                         bottomLeftRadius: 0
                     }
@@ -142,8 +148,8 @@ Control {
                     id: minusButton
                     Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
                     text: "-"
-                    palette.buttonText: "#D7D9DC"
-                    font.pixelSize: 34
+                    palette.buttonText: Colors.textValue
+                    font.pixelSize: Typography.titleLarge
 
                     onClicked: root.valueChangedByUser(Math.max(root.minimum, root.value - 1))
                     background: Item { implicitWidth: 40; implicitHeight: 40 }
@@ -158,8 +164,8 @@ Control {
                     id: plusButton
                     Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                     text: "+"
-                    palette.buttonText: "#D7D9DC"
-                    font.pixelSize: 34
+                    palette.buttonText: Colors.textValue
+                    font.pixelSize: Typography.titleLarge
                     onClicked: root.valueChangedByUser(Math.min(root.maximum, root.value + 1))
                     background: Item { implicitWidth: 40; implicitHeight: 40 }
                 }

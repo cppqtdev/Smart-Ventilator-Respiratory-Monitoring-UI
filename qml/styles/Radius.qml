@@ -1,5 +1,10 @@
 pragma Singleton
-import QtQuick 2.15
+// -----------------------------------------------------------------------
+// File: Radius.qml
+// Description: Border radius value singleton
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
+import QtQuick
 
 QtObject {
     readonly property int small: 8

@@ -1,6 +1,11 @@
 pragma ComponentBehavior: Bound
+// -----------------------------------------------------------------------
+// File: LayoutScreen.qml
+// Description: Monitoring layout preset selection
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
 
-import QtQuick 2.15
+import QtQuick
 import QtQuick.Controls.Basic
 import "../styles"
 import "../components/cards"
@@ -45,7 +50,8 @@ Control {
                         PrimaryButton {
                             width: parent.width
                             text: "Layout " + (layoutDelegate.index + 1)
-                            buttonColor: root.selectedLayout === layoutDelegate.index + 1 ? Colors.accentBlue : "#9AA2AE"
+                            buttonColor: root.selectedLayout === layoutDelegate.index + 1
+                                         ? Colors.accentBlue : Colors.buttonTest
                             onClicked: root.selectedLayout = layoutDelegate.index + 1
                         }
 

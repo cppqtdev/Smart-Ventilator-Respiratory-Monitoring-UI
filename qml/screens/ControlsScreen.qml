@@ -1,6 +1,11 @@
 pragma ComponentBehavior: Bound
+// -----------------------------------------------------------------------
+// File: ControlsScreen.qml
+// Description: Parameter controls organized in five tabbed sections
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
 
-import QtQuick 2.15
+import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
 
@@ -119,13 +124,68 @@ Control {
             property real cellWidth: (width - spacing * 2) / 3
             property real cellHeight: Math.max(180, cellWidth * 0.52)
 
-            PressureGroupBox {  labelText: "FiO2"; value: root.ventilatorData.fio2; unit: "%"; onValueChangedByUser: function(newValue) { root.ventilatorData.fio2 = newValue } }
-            PressureGroupBox {  labelText: "PEEP"; value: root.ventilatorData.peep; maximumValue: 30; unit: "cmH2O"; onValueChangedByUser: function(newValue) { root.ventilatorData.peep = newValue } }
-            PressureGroupBox {  labelText: "Pressure Support"; value: root.ventilatorData.pressureSupport; maximumValue: 40; unit: "cmH2O"; onValueChangedByUser: function(newValue) { root.ventilatorData.pressureSupport = newValue } }
-            PressureGroupBox {  labelText: "Resp. Rate"; value: root.ventilatorData.respiratoryRate; maximumValue: 60; unit: "1/min"; onValueChangedByUser: function(newValue) { root.ventilatorData.respiratoryRate = newValue } }
-            PressureGroupBox {  labelText: "Trigger"; value: root.ventilatorData.trigger; maximumValue: 10; unit: "L/min"; onValueChangedByUser: function(newValue) { root.ventilatorData.trigger = newValue } }
-            PressureGroupBox {  labelText: "Tidal Volume"; value: root.ventilatorData.tidalVolume; maximumValue: 900; unit: "mL"; onValueChangedByUser: function(newValue) { root.ventilatorData.tidalVolume = newValue } }
-            PressureGroupBox {  labelText: "%MinVol"; value: root.ventilatorData.minuteVolume; maximumValue: 400; unit: "%"; onValueChangedByUser: function(newValue) { root.ventilatorData.minuteVolume = newValue } }
+            PressureGroupBox {
+                labelText: "FiO2"
+                value: root.ventilatorData.fio2
+                unit: "%"
+                onValueChangedByUser: function(newValue) {
+                    root.ventilatorData.fio2 = newValue
+                }
+            }
+            PressureGroupBox {
+                labelText: "PEEP"
+                value: root.ventilatorData.peep
+                maximumValue: 30
+                unit: "cmH2O"
+                onValueChangedByUser: function(newValue) {
+                    root.ventilatorData.peep = newValue
+                }
+            }
+            PressureGroupBox {
+                labelText: "Pressure Support"
+                value: root.ventilatorData.pressureSupport
+                maximumValue: 40
+                unit: "cmH2O"
+                onValueChangedByUser: function(newValue) {
+                    root.ventilatorData.pressureSupport = newValue
+                }
+            }
+            PressureGroupBox {
+                labelText: "Resp. Rate"
+                value: root.ventilatorData.respiratoryRate
+                maximumValue: 60
+                unit: "1/min"
+                onValueChangedByUser: function(newValue) {
+                    root.ventilatorData.respiratoryRate = newValue
+                }
+            }
+            PressureGroupBox {
+                labelText: "Trigger"
+                value: root.ventilatorData.trigger
+                maximumValue: 10
+                unit: "L/min"
+                onValueChangedByUser: function(newValue) {
+                    root.ventilatorData.trigger = newValue
+                }
+            }
+            PressureGroupBox {
+                labelText: "Tidal Volume"
+                value: root.ventilatorData.tidalVolume
+                maximumValue: 900
+                unit: "mL"
+                onValueChangedByUser: function(newValue) {
+                    root.ventilatorData.tidalVolume = newValue
+                }
+            }
+            PressureGroupBox {
+                labelText: "%MinVol"
+                value: root.ventilatorData.minuteVolume
+                maximumValue: 400
+                unit: "%"
+                onValueChangedByUser: function(newValue) {
+                    root.ventilatorData.minuteVolume = newValue
+                }
+            }
         }
     }
 
@@ -138,11 +198,40 @@ Control {
             Column {
                 width: parent.width * 0.3
                 spacing: 22
-                PrimaryButton { width: parent.width; text: "Basic"; buttonColor: Colors.success }
-                PrimaryButton { width: parent.width; text: "Patient"; buttonColor: "#0B9D69" }
-                Text { width: parent.width; text: "Ventilation\nTime"; color: Colors.textPrimary; horizontalAlignment: Text.AlignHCenter; font.family: "Courier New"; font.pixelSize: 28; font.bold: true; wrapMode: Text.WordWrap }
-                Text { width: parent.width; text: "0:0:D"; color: Colors.textPrimary; horizontalAlignment: Text.AlignHCenter; font.family: "Courier New"; font.pixelSize: 42; font.bold: true }
-                PrimaryButton { width: parent.width * 0.62; anchors.horizontalCenter: parent.horizontalCenter; text: "Reset" }
+                PrimaryButton {
+                    width: parent.width
+                    text: "Basic"
+                    buttonColor: Colors.success
+                }
+                PrimaryButton {
+                    width: parent.width
+                    text: "Patient"
+                    buttonColor: Colors.successDark
+                }
+                Text {
+                    width: parent.width
+                    text: "Ventilation\nTime"
+                    color: Colors.textPrimary
+                    horizontalAlignment: Text.AlignHCenter
+                    font.family: Typography.monoFamily
+                    font.pixelSize: Typography.subtitleLarge
+                    font.weight: Font.DemiBold
+                    wrapMode: Text.WordWrap
+                }
+                Text {
+                    width: parent.width
+                    text: "0:0:D"
+                    color: Colors.textPrimary
+                    horizontalAlignment: Text.AlignHCenter
+                    font.family: Typography.monoFamily
+                    font.pixelSize: Typography.headline
+                    font.weight: Font.DemiBold
+                }
+                PrimaryButton {
+                    width: parent.width * 0.62
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "Reset"
+                }
             }
 
            Control {
@@ -175,16 +264,16 @@ Control {
                             width: (parent.width - parent.spacing) / 2;
                             text: "Male";
                             checked: true
-                            font.pixelSize: 18
-                            font.bold: true
+                            font.pixelSize: Typography.label
+                            font.weight: Font.DemiBold
                             onClicked: root.patientData.gender = "Male"
                         }
 
                         PrefsTabButton {
                             width: (parent.width - parent.spacing) / 2;
                             text: "Female";
-                            font.pixelSize: 18
-                            font.bold: true
+                            font.pixelSize: Typography.label
+                            font.weight: Font.DemiBold
                             onClicked: root.patientData.gender = "Female"
                         }
                     }
@@ -194,8 +283,8 @@ Control {
                         text: "Pat. height\n" + root.patientData.gender + "\nIBW: " + root.patientData.ibw + " kg"
                         color: Colors.textSecondary
                         horizontalAlignment: Text.AlignHCenter
-                        font.family: "Courier New"
-                        font.pixelSize: 22
+                        font.family: Typography.monoFamily
+                        font.pixelSize: Typography.bodyLarge
                         wrapMode: Text.WordWrap
                     }
                 }
@@ -210,12 +299,48 @@ Control {
             spacing: 30
             property real cellWidth: (width - spacing * 2) / 3
             property real cellHeight: Math.max(178, height / 3 - spacing)
-            PressureGroupBox {  labelText: "P-Ramp"; value: 60; unit: "%" }
-            PressureGroupBox {  labelText: "Oxygen"; value: root.ventilatorData.fio2; unit: "%"; onValueChangedByUser: function(newValue) { root.ventilatorData.fio2 = newValue } }
-            PressureGroupBox {  labelText: "Pressure Limit"; value: 35; maximumValue: 60; unit: "cmH2O" }
-            PressureGroupBox {  labelText: "PEEP C/PAP"; value: root.ventilatorData.peep; maximumValue: 30; unit: "cmH2O"; onValueChangedByUser: function(newValue) { root.ventilatorData.peep = newValue } }
-            PressureGroupBox {  labelText: "ETS"; value: 25; unit: "%" }
-            PressureGroupBox {  labelText: "%MinVol"; value: root.ventilatorData.minuteVolume; maximumValue: 400; unit: "%"; onValueChangedByUser: function(newValue) { root.ventilatorData.minuteVolume = newValue } }
+            PressureGroupBox {
+                labelText: "P-Ramp"
+                value: 60
+                unit: "%"
+            }
+            PressureGroupBox {
+                labelText: "Oxygen"
+                value: root.ventilatorData.fio2
+                unit: "%"
+                onValueChangedByUser: function(newValue) {
+                    root.ventilatorData.fio2 = newValue
+                }
+            }
+            PressureGroupBox {
+                labelText: "Pressure Limit"
+                value: 35
+                maximumValue: 60
+                unit: "cmH2O"
+            }
+            PressureGroupBox {
+                labelText: "PEEP C/PAP"
+                value: root.ventilatorData.peep
+                maximumValue: 30
+                unit: "cmH2O"
+                onValueChangedByUser: function(newValue) {
+                    root.ventilatorData.peep = newValue
+                }
+            }
+            PressureGroupBox {
+                labelText: "ETS"
+                value: 25
+                unit: "%"
+            }
+            PressureGroupBox {
+                labelText: "%MinVol"
+                value: root.ventilatorData.minuteVolume
+                maximumValue: 400
+                unit: "%"
+                onValueChangedByUser: function(newValue) {
+                    root.ventilatorData.minuteVolume = newValue
+                }
+            }
         }
     }
 
@@ -226,12 +351,42 @@ Control {
             spacing: 30
             property real cellWidth: (width - spacing * 2) / 3
             property real cellHeight: Math.max(178, height / 3 - spacing)
-            PressureGroupBox {  labelText: "High Pressure"; value: 40; maximumValue: 80; unit: "cmH2O" }
-            PressureGroupBox {  labelText: "Low Pressure"; value: 5; maximumValue: 40; unit: "cmH2O" }
-            PressureGroupBox {  labelText: "Apnea Time"; value: 20; maximumValue: 60; unit: "s" }
-            PressureGroupBox {  labelText: "Low VT"; value: 300; maximumValue: 900; unit: "mL" }
-            PressureGroupBox {  labelText: "High MV"; value: 12; maximumValue: 30; unit: "L/min" }
-            PressureGroupBox {  labelText: "SpO2 Low"; value: 90; maximumValue: 100; unit: "%" }
+            PressureGroupBox {
+                labelText: "High Pressure"
+                value: 40
+                maximumValue: 80
+                unit: "cmH2O"
+            }
+            PressureGroupBox {
+                labelText: "Low Pressure"
+                value: 5
+                maximumValue: 40
+                unit: "cmH2O"
+            }
+            PressureGroupBox {
+                labelText: "Apnea Time"
+                value: 20
+                maximumValue: 60
+                unit: "s"
+            }
+            PressureGroupBox {
+                labelText: "Low VT"
+                value: 300
+                maximumValue: 900
+                unit: "mL"
+            }
+            PressureGroupBox {
+                labelText: "High MV"
+                value: 12
+                maximumValue: 30
+                unit: "L/min"
+            }
+            PressureGroupBox {
+                labelText: "SpO2 Low"
+                value: 90
+                maximumValue: 100
+                unit: "%"
+            }
         }
     }
 
@@ -240,7 +395,12 @@ Control {
         Column {
             spacing: 28
 
-            Text { text: "Apnea Backup"; color: Colors.textPrimary; font.pixelSize: 32; font.bold: true }
+            Text {
+                text: "Apnea Backup"
+                color: Colors.textPrimary
+                font.pixelSize: Typography.title
+                font.weight: Font.DemiBold
+            }
 
             Grid {
                 width: parent.width
@@ -254,10 +414,10 @@ Control {
                         id: backupButton
                         required property string modelData
                         width: (parent.width - 44) / 3
-                        font.pixelSize: 18
+                        font.pixelSize: Typography.label
                         height: 48
                         text: backupButton.modelData
-                        buttonColor: "#8F98A6"
+                        buttonColor: Colors.buttonMuted
                     }
 
                 }

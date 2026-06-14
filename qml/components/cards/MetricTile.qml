@@ -1,4 +1,9 @@
-import QtQuick 2.15
+// -----------------------------------------------------------------------
+// File: MetricTile.qml
+// Description: Numeric value display tile for vital parameters
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
+import QtQuick
 import "../../styles"
 
 Panel {
@@ -21,7 +26,7 @@ Panel {
         text: root.label
         color: Colors.textPrimary
         font.pixelSize: Math.max(16, Math.min(24, parent.height * 0.16))
-        font.bold: true
+        font.weight: Font.DemiBold
         elide: Text.ElideRight
         wrapMode: Text.NoWrap
     }
@@ -36,7 +41,7 @@ Panel {
         text: root.value
         color: Colors.textPrimary
         font.pixelSize: Math.max(28, Math.min(48, parent.height * 0.30))
-        font.bold: true
+        font.weight: Font.DemiBold
         horizontalAlignment: Text.AlignRight
         minimumPixelSize: 20
         fontSizeMode: Text.Fit

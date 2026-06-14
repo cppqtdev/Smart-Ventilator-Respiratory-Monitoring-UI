@@ -1,6 +1,11 @@
 pragma ComponentBehavior: Bound
+// -----------------------------------------------------------------------
+// File: BottomNavigation.qml
+// Description: Eight-tab persistent bottom navigation bar
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
 
-import QtQuick 2.15
+import QtQuick
 import QtQuick.Controls.Basic
 import "../../styles"
 import "../buttons"
@@ -67,7 +72,7 @@ TabBar {
 
     component NavTabButton: PrefsTabButton {
         property string screen: ""
-        font.pixelSize: 18
+        font.pixelSize: Typography.label
         font.weight: Font.Bold
     }
 }

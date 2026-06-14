@@ -1,7 +1,12 @@
 pragma ComponentBehavior: Bound
+// -----------------------------------------------------------------------
+// File: main.qml
+// Description: Root ApplicationWindow with screen routing and controller bindings
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
 
-import QtQuick 2.15
-import QtQuick.Window 2.15
+import QtQuick
+import QtQuick.Window
 import QtQuick.Controls.Basic
 
 import "qml/styles"
@@ -22,6 +27,7 @@ ApplicationWindow {
     property var patientModel: patientController
     property var ventilatorModel: ventilatorController
     property var alarmModel: alarmController
+    property var eventModel: eventController
     property string currentScreen: "standby"
     property bool ventilationActive: ventilatorModel.running
     property bool alarmVisible: alarmModel.active
@@ -46,6 +52,10 @@ ApplicationWindow {
             return toolsScreen
         if (root.currentScreen === "layout")
             return layoutScreen
+        if (root.currentScreen === "shutdown")
+            return shutdownScreen
+        if (root.currentScreen === "emergency")
+            return emergencyScreen
         return monitoringScreen
     }
 
@@ -163,6 +173,7 @@ ApplicationWindow {
         id: eventsScreen
         EventsScreen {
             alarmData: alarmModel
+            eventData: eventModel
         }
     }
 
@@ -170,11 +181,31 @@ ApplicationWindow {
         id: toolsScreen
         ToolsScreen {
             ventilatorData: ventilatorModel
+            eventData: eventModel
         }
     }
 
     Component {
         id: layoutScreen
         LayoutScreen {}
+    }
+
+    Component {
+        id: shutdownScreen
+        ShutdownScreen {
+            ventilatorData: ventilatorModel
+            alarmData: alarmModel
+            onShutdownConfirmed: root.currentScreen = "standby"
+            onShutdownCancelled: root.currentScreen = "monitoring"
+        }
+    }
+
+    Component {
+        id: emergencyScreen
+        EmergencyScreen {
+            ventilatorData: ventilatorModel
+            alarmData: alarmModel
+            onExitEmergency: root.currentScreen = "monitoring"
+        }
     }
 }

@@ -1,4 +1,9 @@
-import QtQuick 2.15
+// -----------------------------------------------------------------------
+// File: MonitoringScreen.qml
+// Description: Active monitoring with real-time waveforms, metrics, and lung visualization
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
+import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
 
@@ -23,11 +28,43 @@ Control {
 
             spacing: 16
             property real tileHeight: (height - spacing * 4) / 5
-            MetricTile { width: parent.width; height: parent.tileHeight; label: "Ppeak"; value: root.ventilatorData.ppeak; unit: "cmH2O"; state: root.ventilatorData.ppeak > 42 ? "critical" : "normal" }
-            MetricTile { width: parent.width; height: parent.tileHeight; label: "Pplat"; value: root.ventilatorData.pplat; unit: "cmH2O" }
-            MetricTile { width: parent.width; height: parent.tileHeight; label: "Pmean"; value: root.ventilatorData.pmean; unit: "cmH2O" }
-            MetricTile { width: parent.width; height: parent.tileHeight; label: "PEEP"; value: root.ventilatorData.peep; unit: "cmH2O" }
-            MetricTile { width: parent.width; height: parent.tileHeight; label: "Minute Vol"; value: root.ventilatorData.minuteVolume; unit: "%"; state: root.ventilatorData.minuteVolume > 145 ? "critical" : "normal" }
+            MetricTile {
+                width: parent.width
+                height: parent.tileHeight
+                label: "Ppeak"
+                value: root.ventilatorData.ppeak
+                unit: "cmH2O"
+                state: root.ventilatorData.ppeak > 42 ? "critical" : "normal"
+            }
+            MetricTile {
+                width: parent.width
+                height: parent.tileHeight
+                label: "Pplat"
+                value: root.ventilatorData.pplat
+                unit: "cmH2O"
+            }
+            MetricTile {
+                width: parent.width
+                height: parent.tileHeight
+                label: "Pmean"
+                value: root.ventilatorData.pmean
+                unit: "cmH2O"
+            }
+            MetricTile {
+                width: parent.width
+                height: parent.tileHeight
+                label: "PEEP"
+                value: root.ventilatorData.peep
+                unit: "cmH2O"
+            }
+            MetricTile {
+                width: parent.width
+                height: parent.tileHeight
+                label: "Minute Vol"
+                value: root.ventilatorData.minuteVolume
+                unit: "%"
+                state: root.ventilatorData.minuteVolume > 145 ? "critical" : "normal"
+            }
         }
 
         Panel {
@@ -97,10 +134,34 @@ Control {
                                 height: parent.height
                                 columns: 2
                                 spacing: 14
-                                MetricTile { width: (parent.width - 14) / 2; height: (parent.height - 14) / 2; label: "EtCO2"; value: root.ventilatorData.etco2; unit: "mmHg" }
-                                MetricTile { width: (parent.width - 14) / 2; height: (parent.height - 14) / 2; label: "SpO2"; value: root.ventilatorData.spo2; unit: "%" }
-                                MetricTile { width: (parent.width - 14) / 2; height: (parent.height - 14) / 2; label: "Cstat"; value: root.ventilatorData.compliance; unit: "mL/cmH2O" }
-                                MetricTile { width: (parent.width - 14) / 2; height: (parent.height - 14) / 2; label: "Rinsp"; value: root.ventilatorData.resistance; unit: "cmH2O/s" }
+                                MetricTile {
+                                    width: (parent.width - 14) / 2
+                                    height: (parent.height - 14) / 2
+                                    label: "EtCO2"
+                                    value: root.ventilatorData.etco2
+                                    unit: "mmHg"
+                                }
+                                MetricTile {
+                                    width: (parent.width - 14) / 2
+                                    height: (parent.height - 14) / 2
+                                    label: "SpO2"
+                                    value: root.ventilatorData.spo2
+                                    unit: "%"
+                                }
+                                MetricTile {
+                                    width: (parent.width - 14) / 2
+                                    height: (parent.height - 14) / 2
+                                    label: "Cstat"
+                                    value: root.ventilatorData.compliance
+                                    unit: "mL/cmH2O"
+                                }
+                                MetricTile {
+                                    width: (parent.width - 14) / 2
+                                    height: (parent.height - 14) / 2
+                                    label: "Rinsp"
+                                    value: root.ventilatorData.resistance
+                                    unit: "cmH2O/s"
+                                }
                             }
 
                             Panel {
@@ -115,7 +176,17 @@ Control {
                                     sourceSize: Qt.size(150, 300/0.92077)
                                 }
 
-                                Text { anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 22; text: root.patientData.gender + "\n" + root.patientData.height + " cm\nIBW: " + root.patientData.ibw + " kg"; color: Colors.textSecondary; font.pixelSize: 22; horizontalAlignment: Text.AlignRight }
+                                Text {
+                                    anchors.right: parent.right
+                                    anchors.bottom: parent.bottom
+                                    anchors.margins: 22
+                                    text: root.patientData.gender + "\n"
+                                          + root.patientData.height + " cm\nIBW: "
+                                          + root.patientData.ibw + " kg"
+                                    color: Colors.textSecondary
+                                    font.pixelSize: Typography.bodyLarge
+                                    horizontalAlignment: Text.AlignRight
+                                }
                             }
                         }
 
@@ -150,10 +221,37 @@ Control {
                         id: knobColumn
                         spacing: 18
 
-                        PrefsTabButton { width: Math.min(170, parent.width); text: root.ventilatorData.frozen ? "Resume" : "Freeze"; onClicked: root.ventilatorData.toggleFreeze() }
-                        PressureGroupBox { labelText: "Oxygen"; value: root.ventilatorData.fio2; unit: "%"; onValueChangedByUser: function(newValue) { root.ventilatorData.fio2 = newValue } }
-                        PressureGroupBox { labelText: "PEEP C/PAP"; value: root.ventilatorData.peep; maximumValue: 30; unit: "cmH2O"; onValueChangedByUser: function(newValue) { root.ventilatorData.peep = newValue } }
-                        PressureGroupBox { labelText: "%MinVol"; value: root.ventilatorData.minuteVolume; maximumValue: 400; unit: "%"; onValueChangedByUser: function(newValue) { root.ventilatorData.minuteVolume = newValue } }
+                        PrefsTabButton {
+                            width: Math.min(170, parent.width)
+                            text: root.ventilatorData.frozen ? "Resume" : "Freeze"
+                            onClicked: root.ventilatorData.toggleFreeze()
+                        }
+                        PressureGroupBox {
+                            labelText: "Oxygen"
+                            value: root.ventilatorData.fio2
+                            unit: "%"
+                            onValueChangedByUser: function(newValue) {
+                                root.ventilatorData.fio2 = newValue
+                            }
+                        }
+                        PressureGroupBox {
+                            labelText: "PEEP C/PAP"
+                            value: root.ventilatorData.peep
+                            maximumValue: 30
+                            unit: "cmH2O"
+                            onValueChangedByUser: function(newValue) {
+                                root.ventilatorData.peep = newValue
+                            }
+                        }
+                        PressureGroupBox {
+                            labelText: "%MinVol"
+                            value: root.ventilatorData.minuteVolume
+                            maximumValue: 400
+                            unit: "%"
+                            onValueChangedByUser: function(newValue) {
+                                root.ventilatorData.minuteVolume = newValue
+                            }
+                        }
 
                         Item {
                             width: Math.min(170, parent.width)

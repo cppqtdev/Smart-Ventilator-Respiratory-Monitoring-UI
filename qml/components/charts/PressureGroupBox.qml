@@ -1,6 +1,13 @@
+// -----------------------------------------------------------------------
+// File: PressureGroupBox.qml
+// Description: Pressure gauge with increment and decrement curved buttons
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+
+import "../../styles"
 
 GroupBox {
     id: root
@@ -14,7 +21,7 @@ GroupBox {
 
     // GroupBox
     property string labelText: ""
-    property color titleColor: "#CDCFD5"
+    property color titleColor: Colors.textLabel
     property int titlePixelSize: 21
     property color groupBackgroundColor: "transparent"
 
@@ -25,18 +32,18 @@ GroupBox {
     property real controlSpacing: 0
 
     // Side button style
-    property color sideButtonColor: "#236AB2"
+    property color sideButtonColor: Colors.accentBlueDark
     property color sideButtonTextColor: "white"
     property int sideButtonTextPixelSize: 24
     property real sideButtonCornerRadius: 12
     property real sideButtonCurveDepth: 32
 
     // Gauge style
-    property color progressColor: "#4D8EFF"
-    property color trackColor: "#59647C"
-    property color valueColor: "#D7D9DC"
-    property color unitColor: "#6C7586"
-    property color centerBackgroundColor: "#00000000"
+    property color progressColor: Colors.accentBlue
+    property color trackColor: Colors.disabled
+    property color valueColor: Colors.textValue
+    property color unitColor: Colors.textUnit
+    property color centerBackgroundColor: Colors.transparent
 
     property real ringThickness: 12
     property real ringPadding: 8
@@ -49,7 +56,7 @@ GroupBox {
     palette.windowText: root.titleColor
     palette.mid: "transparent"
     font.pixelSize: root.titlePixelSize
-    font.bold: true
+    font.weight: Font.DemiBold
     padding: 0
     spacing: 5
 

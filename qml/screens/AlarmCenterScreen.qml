@@ -1,4 +1,11 @@
-import QtQuick 2.15
+pragma ComponentBehavior: Bound
+// -----------------------------------------------------------------------
+// File: AlarmCenterScreen.qml
+// Description: Alarm history table with severity filtering and acknowledge actions
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
+
+import QtQuick
 import "../styles"
 import "../components/cards"
 import "../components/buttons"
@@ -23,6 +30,22 @@ Item {
                 buttonColor: Colors.success
                 onClicked: root.alarmData.acknowledgeActiveAlarm()
             }
+
+            PrimaryButton {
+                width: 260
+                text: root.alarmData.silenced
+                    ? "Silenced (" + root.alarmData.silenceRemaining + "s)"
+                    : "Silence 120s"
+                buttonColor: root.alarmData.silenced
+                    ? Colors.warning
+                    : Colors.buttonMuted
+                onClicked: {
+                    if (root.alarmData.silenced)
+                        root.alarmData.cancelSilence()
+                    else
+                        root.alarmData.silenceAlarms(120)
+                }
+            }
         }
         Panel {
             width: parent.width
@@ -41,8 +64,8 @@ Item {
                             width: parent.width / 5
                             text: modelData
                             color: Colors.textSecondary
-                            font.pixelSize: 22
-                            font.bold: true
+                            font.pixelSize: Typography.bodyLarge
+                            font.weight: Font.DemiBold
                         }
                     }
                 }
@@ -59,15 +82,46 @@ Item {
                         width: parent.width
                         height: 82
                         radius: Radius.small
-                        color: alarmRowDelegate.priority === "Critical" ? "#7B2A35" : alarmRowDelegate.priority === "Warning" ? "#65552A" : Colors.surfaceRaised
+                        color: alarmRowDelegate.priority === "Critical"
+                                   ? Colors.criticalBackground
+                                   : alarmRowDelegate.priority === "Warning"
+                                     ? Colors.warningBackground
+                                     : Colors.surfaceRaised
                         Row {
                             anchors.fill: parent
                             anchors.margins: 18
-                            Text { width: parent.width / 5; text: alarmRowDelegate.time; color: Colors.textPrimary; font.pixelSize: 22 }
-                            Text { width: parent.width / 5; text: alarmRowDelegate.priority; color: Colors.textPrimary; font.pixelSize: 22; font.bold: true }
-                            Text { width: parent.width / 5; text: alarmRowDelegate.source; color: Colors.textPrimary; font.pixelSize: 22 }
-                            Text { width: parent.width / 5; text: alarmRowDelegate.description; color: Colors.textPrimary; font.pixelSize: 22; elide: Text.ElideRight }
-                            Text { width: parent.width / 5; text: alarmRowDelegate.status; color: Colors.textPrimary; font.pixelSize: 22 }
+                            Text {
+                                width: parent.width / 5
+                                text: alarmRowDelegate.time
+                                color: Colors.textPrimary
+                                font.pixelSize: Typography.bodyLarge
+                            }
+                            Text {
+                                width: parent.width / 5
+                                text: alarmRowDelegate.priority
+                                color: Colors.textPrimary
+                                font.pixelSize: Typography.bodyLarge
+                                font.weight: Font.DemiBold
+                            }
+                            Text {
+                                width: parent.width / 5
+                                text: alarmRowDelegate.source
+                                color: Colors.textPrimary
+                                font.pixelSize: Typography.bodyLarge
+                            }
+                            Text {
+                                width: parent.width / 5
+                                text: alarmRowDelegate.description
+                                color: Colors.textPrimary
+                                font.pixelSize: Typography.bodyLarge
+                                elide: Text.ElideRight
+                            }
+                            Text {
+                                width: parent.width / 5
+                                text: alarmRowDelegate.status
+                                color: Colors.textPrimary
+                                font.pixelSize: Typography.bodyLarge
+                            }
                         }
                     }
                 }

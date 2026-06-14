@@ -1,4 +1,9 @@
-import QtQuick 2.15
+// -----------------------------------------------------------------------
+// File: WaveformChart.qml
+// Description: Canvas-based real-time waveform renderer
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
+import QtQuick
 import "../../styles"
 import "../cards"
 Panel {
@@ -16,8 +21,8 @@ Panel {
         anchors.margins: 18
         text: root.title
         color: Colors.textPrimary
-        font.pixelSize: 26
-        font.bold: true
+        font.pixelSize: Typography.subtitle
+        font.weight: Font.DemiBold
         z: 2
     }
 

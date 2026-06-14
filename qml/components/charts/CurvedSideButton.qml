@@ -1,7 +1,14 @@
+// -----------------------------------------------------------------------
+// File: CurvedSideButton.qml
+// Description: Shape-based curved button for gauge side controls
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Shapes
+
+import "../../styles"
 
 Item {
     id: root
@@ -15,7 +22,7 @@ Item {
 
     property int edge: CurvedSideButton.Left
 
-    property color backgroundColor: "#0B83C9"
+    property color backgroundColor: Colors.accentCyan
     property color borderColor: "transparent"
     property real borderWidth: 0
 

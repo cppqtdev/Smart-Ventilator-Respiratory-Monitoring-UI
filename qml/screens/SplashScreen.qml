@@ -1,4 +1,9 @@
-import QtQuick 2.15
+// -----------------------------------------------------------------------
+// File: SplashScreen.qml
+// Description: Boot animation with company branding and progress indicator
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
+import QtQuick
 import "../styles"
 
 Item {
@@ -66,7 +71,7 @@ Item {
                 onPaint: {
                     var ctx = getContext("2d")
                     ctx.clearRect(0, 0, width, height)
-                    ctx.strokeStyle = "#00A8DF"
+                    ctx.strokeStyle = Colors.brand
                     ctx.lineWidth = 9
                     ctx.lineJoin = "round"
                     ctx.lineCap = "round"
@@ -88,7 +93,7 @@ Item {
                     ctx.beginPath()
                     ctx.arc(132, 78, 7, 0, Math.PI * 2)
                     ctx.arc(132, 112, 7, 0, Math.PI * 2)
-                    ctx.fillStyle = "#00A8DF"
+                    ctx.fillStyle = Colors.brand
                     ctx.fill()
                 }
             }
@@ -97,7 +102,7 @@ Item {
                 width: 4
                 height: parent.height * 0.72
                 anchors.verticalCenter: parent.verticalCenter
-                color: "#00A8DF"
+                color: Colors.brand
             }
 
             Column {
@@ -108,20 +113,20 @@ Item {
                 Text {
                     width: parent.width
                     text: "ALSONS"
-                    color: "#00A8DF"
+                    color: Colors.brand
                     font.pixelSize: Math.max(42, Math.min(58, root.width * 0.03))
-                    font.bold: true
-                    font.family: "Arial"
+                    font.weight: Font.DemiBold
+                    font.family: Typography.family
                     elide: Text.ElideRight
                 }
 
                 Text {
                     width: parent.width
                     text: "TECHNOLOGY"
-                    color: "#00A8DF"
+                    color: Colors.brand
                     font.pixelSize: Math.max(42, Math.min(58, root.width * 0.03))
-                    font.bold: true
-                    font.family: "Arial"
+                    font.weight: Font.DemiBold
+                    font.family: Typography.family
                     elide: Text.ElideRight
                 }
             }
@@ -139,7 +144,7 @@ Item {
             width: parent.width
             height: 18
             radius: height / 2
-            color: "#4A5368"
+            color: Colors.progressTrack
             clip: true
 
             Rectangle {
@@ -159,8 +164,8 @@ Item {
             text: root.bootStages[root.stageIndex] + "  " + root.progress + "%"
             color: Colors.textSecondary
             horizontalAlignment: Text.AlignHCenter
-            font.pixelSize: 20
-            font.bold: true
+            font.pixelSize: Typography.body
+            font.weight: Font.DemiBold
             elide: Text.ElideRight
         }
 
@@ -169,9 +174,9 @@ Item {
             text: "SW Version: " + root.softwareVersion
             color: Colors.textPrimary
             horizontalAlignment: Text.AlignHCenter
-            font.family: "Courier New"
+            font.family: Typography.monoFamily
             font.pixelSize: Math.max(30, Math.min(44, root.width * 0.022))
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         Text {
@@ -179,7 +184,7 @@ Item {
             text: "Operating Hours Total: " + root.operatingHours.toFixed(2)
             color: Colors.textPrimary
             horizontalAlignment: Text.AlignHCenter
-            font.family: "Courier New"
+            font.family: Typography.monoFamily
             font.pixelSize: Math.max(24, Math.min(34, root.width * 0.018))
         }
     }

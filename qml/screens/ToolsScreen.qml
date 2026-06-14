@@ -1,6 +1,11 @@
 pragma ComponentBehavior: Bound
+// -----------------------------------------------------------------------
+// File: ToolsScreen.qml
+// Description: Utility gauges and alarm log across three pages
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
 
-import QtQuick 2.15
+import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
 
@@ -13,6 +18,7 @@ Page {
     id: root
     property var ventilatorData
     property var alarmData
+    property var eventData
     property int currentTab: 0
 
     padding: 24
@@ -99,6 +105,7 @@ Page {
 
         EventsScreen {
             alarmData: root.alarmData
+            eventData: root.eventData
             padding: 0
             background: null
         }

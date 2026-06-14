@@ -1,6 +1,11 @@
 pragma ComponentBehavior: Bound
+// -----------------------------------------------------------------------
+// File: SystemDiagnosticsScreen.qml
+// Description: System information, self-test results, sensor status, and settings
+// Part of: Smart Ventilator and Respiratory Monitoring UI
+// -----------------------------------------------------------------------
 
-import QtQuick 2.15
+import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
 
@@ -101,16 +106,22 @@ Page {
                 width: parent.width * 0.68
                 height: parent.height * 0.78
                 radius: Radius.small
-                color: "#59647C"
+                color: Colors.disabled
                 clip: true
 
                 Text {
                     anchors.fill: parent
                     anchors.margins: 24
-                    text: "Options:\t\t---\n\nAdult/ped.\t\tNeonatal\nnCPAP\t\tTRC\nDuoPAP/APRV\t\tTrends/Loops\nNIV/NIV-ST\t\tP/V Tool Pro\nMasimo Rainbow\t\t---\nHi Flow O2\t\t---"
+                    text: "Options:\t\t---\n\n"
+                          + "Adult/ped.\t\tNeonatal\n"
+                          + "nCPAP\t\tTRC\n"
+                          + "DuoPAP/APRV\t\tTrends/Loops\n"
+                          + "NIV/NIV-ST\t\tP/V Tool Pro\n"
+                          + "Masimo Rainbow\t\t---\n"
+                          + "Hi Flow O2\t\t---"
                     color: Colors.textPrimary
-                    font.family: "Courier New"
-                    font.pixelSize: 23
+                    font.family: Typography.monoFamily
+                    font.pixelSize: Typography.bodyLarge
                     wrapMode: Text.WordWrap
                     lineHeight: 1.22
                 }
@@ -149,7 +160,12 @@ Page {
                         height: 48
                         spacing: 18
 
-                        PrimaryButton { width: 230; height: parent.height; text: testRow.modelData[0]; buttonColor: "#9AA2AE" }
+                        PrimaryButton {
+                            width: 230
+                            height: parent.height
+                            text: testRow.modelData[0]
+                            buttonColor: Colors.buttonTest
+                        }
 
                         Rectangle {
                             width: 48
@@ -159,10 +175,25 @@ Page {
                             border.color: Colors.line
                             border.width: 2
 
-                            Text { anchors.centerIn: parent; text: testRow.modelData[1] === "Passed" ? "✓" : "•"; color: testRow.modelData[1] === "Passed" ? "#18C889" : Colors.warning; font.pixelSize: 28; font.bold: true }
+                            Text {
+                                anchors.centerIn: parent
+                                text: testRow.modelData[1] === "Passed" ? "✓" : "•"
+                                color: testRow.modelData[1] === "Passed"
+                                       ? Colors.successBright : Colors.warning
+                                font.pixelSize: Typography.subtitleLarge
+                                font.weight: Font.DemiBold
+                            }
                         }
 
-                        Text { width: parent.width - 330; anchors.verticalCenter: parent.verticalCenter; text: testRow.modelData[2]; color: Colors.textPrimary; font.family: "Courier New"; font.pixelSize: 22; wrapMode: Text.WordWrap }
+                        Text {
+                            width: parent.width - 330
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: testRow.modelData[2]
+                            color: Colors.textPrimary
+                            font.family: Typography.monoFamily
+                            font.pixelSize: Typography.bodyLarge
+                            wrapMode: Text.WordWrap
+                        }
                     }
                 }
             }
@@ -174,7 +205,12 @@ Page {
         Row {
             spacing: 24
 
-            PrimaryButton { width: 230; height: 48; text: "On/Off"; buttonColor: "#9AA2AE" }
+            PrimaryButton {
+                width: 230
+                height: 48
+                text: "On/Off"
+                buttonColor: Colors.buttonTest
+            }
 
             Rectangle {
                 width: 48
@@ -184,7 +220,13 @@ Page {
                 border.color: Colors.line
                 border.width: 2
 
-                Text { anchors.centerIn: parent; text: "✓"; color: "#18C889"; font.pixelSize: 28; font.bold: true }
+                Text {
+                    anchors.centerIn: parent
+                    text: "✓"
+                    color: Colors.successBright
+                    font.pixelSize: Typography.subtitleLarge
+                    font.weight: Font.DemiBold
+                }
             }
 
         }
@@ -264,10 +306,11 @@ Page {
 
                     Text {
                         width: parent.width
-                        text: "Date: " + (root.clockData ? root.clockData.dateText : "--") + "\nTime: " + (root.clockData ? root.clockData.timeText : "--")
+                        text: "Date: " + (root.clockData ? root.clockData.dateText : "--")
+                              + "\nTime: " + (root.clockData ? root.clockData.timeText : "--")
                         color: Colors.textPrimary
-                        font.family: "Courier New"
-                        font.pixelSize: 22
+                        font.family: Typography.monoFamily
+                        font.pixelSize: Typography.bodyLarge
                         horizontalAlignment: Text.AlignHCenter
                     }
                 }
