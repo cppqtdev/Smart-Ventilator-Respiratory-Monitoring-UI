@@ -21,6 +21,10 @@ DatabaseManager::~DatabaseManager()
 
 bool DatabaseManager::initialize()
 {
+    // PRODUCTION: For FDA 21 CFR Part 11 compliance, the database file must
+    // be stored on an encrypted partition with access control. Consider using
+    // SQLCipher for at-rest encryption of clinical records.
+
     const QString dataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     QDir().mkpath(dataDir);
     m_databasePath = dataDir + QStringLiteral("/smart_ventilator_demo.sqlite");
@@ -83,6 +87,13 @@ bool DatabaseManager::executeSchema()
         "height INTEGER NOT NULL,"
         "weight INTEGER NOT NULL,"
         "ibw INTEGER NOT NULL)",
+        "CREATE TABLE IF NOT EXISTS users ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "username TEXT NOT NULL UNIQUE,"
+        "pin_hash TEXT NOT NULL,"
+        "role TEXT NOT NULL,"
+        "full_name TEXT NOT NULL,"
+        "created_at TEXT NOT NULL)",
         "CREATE TABLE IF NOT EXISTS parameter_snapshots ("
         "id INTEGER PRIMARY KEY AUTOINCREMENT,"
         "created_at TEXT NOT NULL,"

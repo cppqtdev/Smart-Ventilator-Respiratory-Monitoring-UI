@@ -21,6 +21,13 @@ Control {
     signal shutdownCancelled()
 
     contentItem: Item {
+        // HARDWARE: Before confirming shutdown, the system should:
+        //   1. Verify patient is disconnected or on alternative support
+        //   2. Log final ventilation summary to audit trail
+        //   3. Save operating hours to persistent storage
+        //   4. Close all valves and de-energize actuators
+        //   5. Archive session data for clinical records
+
         ColumnLayout {
             anchors.centerIn: parent
             width: Math.min(parent.width * 0.5, 680)

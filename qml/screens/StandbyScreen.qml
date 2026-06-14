@@ -270,6 +270,9 @@ Item {
                     spacing: 24
                     height: 56
 
+                    // HARDWARE: "Test & Calibration" should trigger actual hardware
+                    // self-test routines before allowing ventilation to start.
+                    // Connect to firmware test API via VentilatorController.
                     PrimaryButton {
                         width: Math.min(450, mainPanel.width * 0.32)
                         height: parent.height
@@ -277,6 +280,9 @@ Item {
                         onClicked: root.setupRequested()
                     }
 
+                    // HARDWARE: "Start Ventilation" initiates the breathing circuit.
+                    // In production, verify all mandatory self-tests have passed
+                    // before allowing start. Check circuit connected, sensors online.
                     PrimaryButton {
                         width: Math.min(450, mainPanel.width * 0.32)
                         height: parent.height

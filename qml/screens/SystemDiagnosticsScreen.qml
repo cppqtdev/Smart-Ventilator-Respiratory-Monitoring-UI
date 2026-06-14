@@ -22,6 +22,15 @@ Page {
     property int infoTab: 0
     property int settingsTab: 0
 
+    // HARDWARE: Replace simulated sensor status with live hardware queries.
+    // Each sensor should report via I2C/SPI/UART:
+    //   O2 Cell         -> Electrochemical cell voltage (0-100% O2)
+    //   Flow Sensor     -> Pneumotachometer differential pressure
+    //   Pressure Sensor -> Piezoresistive transducer (0-120 cmH2O)
+    //   CO2 Sensor      -> Infrared capnograph module
+    //   Temperature     -> Thermistor or RTD probe
+    //   Humidity        -> Capacitive humidity sensor in breathing circuit
+
     // Sensor status tracking (simulated for demo)
     property var sensorStatus: ({
         "O2 Cell": true,
@@ -31,6 +40,15 @@ Page {
         "Temperature": true,
         "Humidity": false
     })
+
+    // HARDWARE: Replace simulated test results with actual hardware self-test
+    // routines. Each test should call firmware diagnostics:
+    //   Tightness    -> Close valves, pressurize circuit, measure leak rate
+    //   Flow Sensor  -> Apply known flow, verify reading within tolerance
+    //   O2 Cell      -> Expose to room air (20.9%), verify calibration
+    //   Circuit Test -> Verify breathing circuit impedance
+    //   Leak Test    -> Measure system leak at operating pressure
+    //   Safety Valve -> Verify overpressure relief valve opens at set point
 
     // Test result tracking
     property var testResults: [

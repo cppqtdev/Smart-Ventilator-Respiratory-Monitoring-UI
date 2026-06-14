@@ -11,6 +11,7 @@ SOURCES += \
         src/controllers/AlarmController.cpp \
         src/controllers/ClockController.cpp \
         src/controllers/EventController.cpp \
+        src/controllers/UserController.cpp \
         src/controllers/PatientController.cpp \
         src/controllers/VentilatorController.cpp
 
@@ -20,6 +21,7 @@ HEADERS += \
         src/controllers/AlarmController.h \
         src/controllers/ClockController.h \
         src/controllers/EventController.h \
+        src/controllers/UserController.h \
         src/controllers/PatientController.h \
         src/controllers/VentilatorController.h
 

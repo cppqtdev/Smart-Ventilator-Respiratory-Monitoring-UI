@@ -16,28 +16,30 @@ Control {
 
     signal loginAccepted(string role)
 
-    property string selectedRole: "Operator"
+    property var userControllerData
+    property string enteredUsername: "admin"
     property string enteredPin: ""
     property string errorMessage: ""
 
-    // Demo PINs for each role
-    readonly property var validPins: ({
-        "Operator": "1234",
-        "Service": "5678",
-        "Admin": "0000"
-    })
+    // PRODUCTION: Implement account lockout after 3 failed attempts
+    // per IEC 62443 (industrial cybersecurity).
 
     function attemptLogin() {
         if (root.enteredPin.length < 4) {
             root.errorMessage = "PIN must be 4 digits"
             return
         }
-        if (root.enteredPin === root.validPins[root.selectedRole]) {
+        if (!root.userControllerData) {
+            root.errorMessage = "System not ready"
+            return
+        }
+        if (root.userControllerData.login(
+                root.enteredUsername, root.enteredPin)) {
             root.errorMessage = ""
             root.enteredPin = ""
-            root.loginAccepted(root.selectedRole)
+            root.loginAccepted(root.userControllerData.currentRole)
         } else {
-            root.errorMessage = "Invalid PIN for " + root.selectedRole
+            root.errorMessage = "Invalid username or PIN"
             root.enteredPin = ""
         }
     }
@@ -65,39 +67,24 @@ Control {
                 horizontalAlignment: Text.AlignHCenter
             }
 
-            // Role selection
+            // Quick user selection buttons
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 12
 
-                PrefsTabButton {
-                    Layout.fillWidth: true
-                    text: "Operator"
-                    checked: root.selectedRole === "Operator"
-                    onClicked: {
-                        root.selectedRole = "Operator"
-                        root.enteredPin = ""
-                        root.errorMessage = ""
-                    }
-                }
-                PrefsTabButton {
-                    Layout.fillWidth: true
-                    text: "Service"
-                    checked: root.selectedRole === "Service"
-                    onClicked: {
-                        root.selectedRole = "Service"
-                        root.enteredPin = ""
-                        root.errorMessage = ""
-                    }
-                }
-                PrefsTabButton {
-                    Layout.fillWidth: true
-                    text: "Admin"
-                    checked: root.selectedRole === "Admin"
-                    onClicked: {
-                        root.selectedRole = "Admin"
-                        root.enteredPin = ""
-                        root.errorMessage = ""
+                Repeater {
+                    model: ["admin", "doctor", "nurse", "service"]
+                    PrefsTabButton {
+                        id: quickBtn
+                        required property string modelData
+                        Layout.fillWidth: true
+                        text: quickBtn.modelData
+                        checked: root.enteredUsername === quickBtn.modelData
+                        onClicked: {
+                            root.enteredUsername = quickBtn.modelData
+                            root.enteredPin = ""
+                            root.errorMessage = ""
+                        }
                     }
                 }
             }
@@ -172,7 +159,7 @@ Control {
             // Demo hint
             Text {
                 Layout.fillWidth: true
-                text: "Demo PINs -- Operator: 1234 | Service: 5678 | Admin: 0000"
+                text: "Default PINs -- admin: 0000 | doctor: 1234 | nurse: 5678 | service: 9999"
                 color: Colors.textMuted
                 font.pixelSize: Typography.caption
                 horizontalAlignment: Text.AlignHCenter

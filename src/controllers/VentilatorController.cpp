@@ -269,6 +269,24 @@ void VentilatorController::appendSample(QVariantList &buffer, double value)
 
 void VentilatorController::updateSimulation()
 {
+    // -----------------------------------------------------------------------
+    // SIMULATION BOUNDARY
+    // This method generates synthetic waveform and measurement data for the
+    // demo UI. In production, replace this entire method body with a hardware
+    // adapter that reads from the actual sensor bus. The QML contract (signals
+    // and properties) remains unchanged.
+    //
+    // Hardware integration points:
+    //   - Pressure (paw):  I2C/SPI pressure transducer (e.g. Honeywell ABPDANT)
+    //   - Flow:            Pneumotachometer or thermal mass flow sensor
+    //   - Volume:          Integrated flow signal (calculated in firmware)
+    //   - CO2:             Mainstream/sidestream capnograph (e.g. Masimo ISA)
+    //   - SpO2:            Pulse oximeter module (serial/CAN, e.g. Masimo SET)
+    //   - Compliance:      Derived: Vt / (Pplat - PEEP)
+    //   - Resistance:      Derived: (Ppeak - Pplat) / Flow
+    //   - VTE, Ftotal:     Firmware-computed from flow integration
+    //   - RCexp, ExpMinVol: Derived from VTE and Ftotal
+    // -----------------------------------------------------------------------
     if (!m_running || m_frozen)
         return;
 
@@ -283,42 +301,42 @@ void VentilatorController::updateSimulation()
     const double effort = std::sin(m_sampleIndex * 0.037) * 0.7 + std::sin(m_sampleIndex * 0.011) * 0.4;
     const double pressureTarget = m_peep + m_pressureSupport + m_tidalVolume / 55.0;
 
-    const double paw = inspiration
+    const double paw = inspiration // REPLACE: read from airway pressure sensor
         ? m_peep + (pressureTarget - m_peep) * (1.0 - std::exp(-normalized * 6.0)) + effort
         : m_peep + (pressureTarget - m_peep) * std::exp(-normalized * 9.0) + effort * 0.35;
     const double flowPeak = m_tidalVolume / 7.0;
-    const double flow = inspiration
+    const double flow = inspiration // REPLACE: read from flow sensor
         ? flowPeak * (1.0 - normalized * 0.7) + effort * 3.0
         : -flowPeak * 0.72 * std::sin(M_PI * normalized) * std::exp(-normalized * 0.35) + effort * 2.0;
-    const double volume = inspiration
+    const double volume = inspiration // REPLACE: read from volume integration
         ? m_tidalVolume * std::sin(normalized * M_PI / 2.0)
         : m_tidalVolume * std::exp(-normalized * 4.4);
 
     const double slow = std::sin(m_sampleIndex * 0.021);
     const double fio2Effect = (m_fio2 - 21.0) / 79.0;
-    m_ppeak = qRound(clampDouble(pressureTarget + 6.0 + slow * 2.2, 8, 58));
-    m_pplat = qRound(clampDouble(pressureTarget + 1.5 + slow, 6, 45));
-    m_pmean = qRound(clampDouble(m_peep + m_pressureSupport * 0.45 + slow, 4, 35));
-    m_spo2 = qRound(clampDouble(92.0 + fio2Effect * 8.0 - qMax(0, m_peep - 18) * 0.15 + std::sin(m_sampleIndex * 0.013), 84, 100));
-    m_etco2 = qRound(clampDouble(31.0 + std::sin(m_sampleIndex * 0.018) * 3.0 - (m_minuteVolume - 100.0) * 0.025, 18, 55));
-    m_compliance = qRound(clampDouble(m_tidalVolume / qMax(1.0, m_pplat - m_peep) + std::sin(m_sampleIndex * 0.017) * 4.0, 12, 95));
-    m_resistance = qRound(clampDouble(8.0 + m_trigger * 0.8 + std::sin(m_sampleIndex * 0.029) * 2.0, 3, 28));
+    m_ppeak = qRound(clampDouble(pressureTarget + 6.0 + slow * 2.2, 8, 58)); // REPLACE: read from pressure sensor
+    m_pplat = qRound(clampDouble(pressureTarget + 1.5 + slow, 6, 45)); // REPLACE: read from pressure sensor (plateau hold)
+    m_pmean = qRound(clampDouble(m_peep + m_pressureSupport * 0.45 + slow, 4, 35)); // REPLACE: compute mean from pressure samples
+    m_spo2 = qRound(clampDouble(92.0 + fio2Effect * 8.0 - qMax(0, m_peep - 18) * 0.15 + std::sin(m_sampleIndex * 0.013), 84, 100)); // REPLACE: read from pulse oximeter module
+    m_etco2 = qRound(clampDouble(31.0 + std::sin(m_sampleIndex * 0.018) * 3.0 - (m_minuteVolume - 100.0) * 0.025, 18, 55)); // REPLACE: read from capnograph sensor
+    m_compliance = qRound(clampDouble(m_tidalVolume / qMax(1.0, m_pplat - m_peep) + std::sin(m_sampleIndex * 0.017) * 4.0, 12, 95)); // REPLACE: derive from real Vt/(Pplat-PEEP)
+    m_resistance = qRound(clampDouble(8.0 + m_trigger * 0.8 + std::sin(m_sampleIndex * 0.029) * 2.0, 3, 28)); // REPLACE: derive from real (Ppeak-Pplat)/Flow
 
     // Derived respiratory mechanics (per Behance design metrics)
-    m_vte = qRound(clampDouble(m_tidalVolume * (0.92 + std::sin(m_sampleIndex * 0.023) * 0.06), 50, 900));
-    m_ftotal = qRound(clampDouble(rr + std::sin(m_sampleIndex * 0.019) * 1.5, 4, 60));
-    m_rcexp = clampDouble(m_compliance * m_resistance / 1000.0 + std::sin(m_sampleIndex * 0.031) * 0.08, 0.1, 2.5);
+    m_vte = qRound(clampDouble(m_tidalVolume * (0.92 + std::sin(m_sampleIndex * 0.023) * 0.06), 50, 900)); // REPLACE: read from flow integration firmware
+    m_ftotal = qRound(clampDouble(rr + std::sin(m_sampleIndex * 0.019) * 1.5, 4, 60)); // REPLACE: count from breath detection firmware
+    m_rcexp = clampDouble(m_compliance * m_resistance / 1000.0 + std::sin(m_sampleIndex * 0.031) * 0.08, 0.1, 2.5); // REPLACE: derive from real compliance * resistance
     m_rcexp = std::round(m_rcexp * 100.0) / 100.0;
-    m_expMinVol = clampDouble(m_vte * m_ftotal / 1000.0, 0.5, 30.0);
+    m_expMinVol = clampDouble(m_vte * m_ftotal / 1000.0, 0.5, 30.0); // REPLACE: derive from real VTE * Ftotal
     m_expMinVol = std::round(m_expMinVol * 10.0) / 10.0;
-    const double co2 = inspiration
+    const double co2 = inspiration // REPLACE: read from CO2 capnograph
         ? qMax(0.0, m_etco2 * std::exp(-normalized * 6.0) - 2.0)
         : m_etco2 * (1.0 - std::exp(-normalized * 8.0)) + std::sin(m_sampleIndex * 0.08);
 
-    appendSample(m_pressureWaveform, paw);
-    appendSample(m_flowWaveform, flow);
-    appendSample(m_volumeWaveform, volume / 10.0);
-    appendSample(m_co2Waveform, co2);
+    appendSample(m_pressureWaveform, paw); // BIND: pressure sensor stream
+    appendSample(m_flowWaveform, flow); // BIND: flow sensor stream
+    appendSample(m_volumeWaveform, volume / 10.0); // BIND: volume integration stream
+    appendSample(m_co2Waveform, co2); // BIND: CO2 sensor stream
 
     evaluateAlarms();
     saveSnapshotIfDue();
@@ -328,6 +346,13 @@ void VentilatorController::updateSimulation()
 
 void VentilatorController::evaluateAlarms()
 {
+    // -----------------------------------------------------------------------
+    // ALARM EVALUATION
+    // In production, alarm thresholds should be validated against the device
+    // specification limits. The alarm priority arbitration follows IEC 60601-1-8.
+    // Hardware integration: connect alarm outputs to audible/visual indicators
+    // via GPIO or dedicated alarm driver IC.
+    // -----------------------------------------------------------------------
     if (!m_alarmController)
         return;
 

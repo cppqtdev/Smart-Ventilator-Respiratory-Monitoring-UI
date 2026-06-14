@@ -24,6 +24,14 @@ Item {
         "Preparing patient data cache",
         "Starting ventilator UI"
     ]
+    // HARDWARE: In production, each boot stage should map to an actual
+    // hardware initialization routine. Replace the fixed timer with
+    // real init callbacks:
+    //   - "Power-on self test"        -> Board POST via firmware API
+    //   - "Checking pressure sensor"  -> I2C probe for pressure transducer
+    //   - "Checking flow sensor"      -> Query flow sensor firmware version
+    //   - "Checking oxygen sensor"    -> Verify O2 cell response
+    //   - "Initializing alarm bus"    -> CAN/GPIO alarm subsystem init
 
     Rectangle {
         anchors.fill: parent

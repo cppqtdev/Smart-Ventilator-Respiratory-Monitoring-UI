@@ -269,3 +269,11 @@ compliance status is assessed below.
 | 2026-06-14 | --     | Added empty state message to AlarmCenterScreen                |
 | 2026-06-14 | --     | Made ModeSelectionScreen confirm button responsive            |
 | 2026-06-14 | --     | Alarm thresholds now use controller properties instead of hardcoded values |
+| 2026-06-14 | --     | Moved alarm audio from AlarmCenterScreen to main.qml (global) |
+| 2026-06-14 | --     | Renamed ToolsScreen tabs to meaningful names                  |
+| 2026-06-14 | --     | Improved WaveformChart: 3-layer trace, sweep cursor, grid     |
+| 2026-06-14 | --     | Added warning state to MetricTile (yellow bg, diamond shape)  |
+| 2026-06-14 | --     | Connected all metric tiles to alarm thresholds                |
+| 2026-06-14 | --     | Made layout selection persistent and functional in MonitoringScreen |
+| 2026-06-14 | --     | Bottom panels always visible regardless of layout preset      |
+| 2026-06-14 | --     | Added HARDWARE/BIND/REPLACE integration comments throughout   |

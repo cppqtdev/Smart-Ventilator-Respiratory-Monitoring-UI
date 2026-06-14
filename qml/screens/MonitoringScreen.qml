@@ -28,6 +28,10 @@ Control {
 
     RowLayout {
         anchors.fill: parent
+        // HARDWARE: All metric values and waveforms in this screen are bound
+        // to VentilatorController properties. To integrate real sensors,
+        // replace the simulation in VentilatorController.updateSimulation()
+        // with hardware driver reads. No QML changes required.
         spacing: Spacing.panelGap
 
         Column {

@@ -10,6 +10,7 @@
 #include "src/controllers/ClockController.h"
 #include "src/controllers/PatientController.h"
 #include "src/controllers/EventController.h"
+#include "src/controllers/UserController.h"
 #include "src/controllers/VentilatorController.h"
 
 int main(int argc, char *argv[])
@@ -30,6 +31,7 @@ int main(int argc, char *argv[])
     PatientController patientController(&databaseManager);
     AlarmController alarmController(&databaseManager);
     EventController eventController(&databaseManager);
+    UserController userController(&databaseManager);
     VentilatorController ventilatorController(&databaseManager, &alarmController);
     ClockController clockController;
 
@@ -42,6 +44,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("patientController"), &patientController);
     engine.rootContext()->setContextProperty(QStringLiteral("alarmController"), &alarmController);
     engine.rootContext()->setContextProperty(QStringLiteral("eventController"), &eventController);
+    engine.rootContext()->setContextProperty(QStringLiteral("userController"), &userController);
     engine.rootContext()->setContextProperty(QStringLiteral("ventilatorController"), &ventilatorController);
     engine.rootContext()->setContextProperty(QStringLiteral("clockController"), &clockController);
     const QUrl url(QStringLiteral("qrc:/main.qml"));

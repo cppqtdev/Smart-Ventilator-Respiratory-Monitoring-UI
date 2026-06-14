@@ -60,6 +60,12 @@ Control {
                             lineHeight: 1.3
                         }
 
+                        // HARDWARE: Target parameters are setpoints sent to the
+                        // ventilator control loop. In production, these values are
+                        // written to the breath delivery firmware which adjusts
+                        // valve positions and timing to achieve the targets.
+                        // The "Achieved" panel on the right shows measured values
+                        // from sensors, allowing clinicians to verify delivery.
                         Grid {
                             width: parent.width
                             columns: 3

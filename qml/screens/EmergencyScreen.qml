@@ -20,6 +20,14 @@ Control {
 
     signal exitEmergency()
 
+    // HARDWARE: Emergency mode should be triggered automatically by:
+    //   - Patient disconnect detection (impedance/flow drop)
+    //   - Multiple simultaneous critical alarms
+    //   - Power failure switchover to battery
+    //   - Operator emergency button (physical hardware button)
+    // The screen should also activate backup ventilation parameters
+    // and send emergency notification to nurse call system.
+
     contentItem: ColumnLayout {
         spacing: Spacing.screenMargin_8
 

@@ -58,6 +58,8 @@ ApplicationWindow {
             return layoutScreen
         if (root.currentScreen === "target")
             return targetScreen
+        if (root.currentScreen === "settings")
+            return settingsScreen
         if (root.currentScreen === "shutdown")
             return shutdownScreen
         if (root.currentScreen === "emergency")
@@ -143,12 +145,13 @@ ApplicationWindow {
     ScreenLockOverlay {
         id: screenLock
         anchors.fill: parent
-        timeoutSeconds: 300
+        timeoutSeconds: userController.lockTimeoutSeconds
     }
 
     Component {
         id: loginScreen
         LoginScreen {
+            userControllerData: userController
             onLoginAccepted: function(role) {
                 root.operatorRole = role
                 root.currentScreen = "standby"
@@ -271,6 +274,15 @@ ApplicationWindow {
             ventilatorData: ventilatorModel
             alarmData: alarmModel
             onExitEmergency: root.currentScreen = "monitoring"
+        }
+    }
+
+    Component {
+        id: settingsScreen
+        SettingsScreen {
+            appSettingsData: appSettings
+            userControllerData: userController
+            clockData: clockController
         }
     }
 }

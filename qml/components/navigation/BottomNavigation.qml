@@ -70,6 +70,12 @@ TabBar {
         onClicked: root.navigate(screen)
     }
 
+    NavTabButton {
+        text: "Settings"
+        screen: "settings"
+        onClicked: root.navigate(screen)
+    }
+
     component NavTabButton: PrefsTabButton {
         property string screen: ""
         font.pixelSize: Typography.label

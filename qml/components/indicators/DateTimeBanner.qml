@@ -47,6 +47,11 @@ Control {
 
         Item { Layout.fillWidth: true }
 
+        // HARDWARE: Replace static icons with live status from:
+        //   - plug.svg    -> AC power detection GPIO (mains connected/disconnected)
+        //   - charge.svg  -> Battery management IC (charge level, charging state)
+        // Bind to a PowerController with properties: acConnected, batteryPercent
+
         Image {
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
             source: "qrc:/qml/assets/icons/plug.svg"

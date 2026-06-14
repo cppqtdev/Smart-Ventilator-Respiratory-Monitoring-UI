@@ -127,6 +127,9 @@ void AlarmController::addAlarm(const QString &priority,
                                const QString &description,
                                const QString &status)
 {
+    // HARDWARE: In production, alarm events should also trigger GPIO outputs
+    // for audible/visual alarm indicators (buzzer, LED panel) per IEC 60601-1-8.
+
     m_rows.prepend({
         QDateTime::currentDateTime().toString(QStringLiteral("hh:mm:ss")),
         priority,
@@ -157,6 +160,9 @@ void AlarmController::acknowledgeActiveAlarm()
 
 void AlarmController::silenceAlarms(int durationSeconds)
 {
+    // HARDWARE: Silence should mute the audio amplifier but keep visual indicators
+    // active. Connect to audio DAC mute pin or amplifier enable GPIO.
+
     // IEC 60601-1-8: Critical alarms must not be silenced for more than 120 seconds.
     durationSeconds = qBound(10, durationSeconds, 120);
     m_silenced = true;

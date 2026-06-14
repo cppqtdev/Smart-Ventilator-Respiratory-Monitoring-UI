@@ -62,6 +62,9 @@ QStringList ClockController::availableTimeZones() const
 
 void ClockController::refresh()
 {
+    // HARDWARE: Replace system clock with hardware RTC (e.g. DS3231 over I2C).
+    // In production, synchronize via NTP when network is available.
+
     const QDateTime now = currentZonedTime();
     const QString nextDate = QLocale(QLocale::English).toString(
         now.date(), QStringLiteral("dd-MMM-yyyy"));

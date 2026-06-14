@@ -74,6 +74,11 @@ Control {
             }
         }
 
+        // HARDWARE: These icons should bind to real device status:
+        //   - signal.svg  -> Network/Wi-Fi signal strength from NetworkManager
+        //   - person.svg  -> Patient connected sensor (impedance detection)
+        //   - mic.svg     -> Microphone/audio input level from ADC
+
         Image {
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
             source: "qrc:/qml/assets/icons/signal.svg"

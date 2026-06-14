@@ -19,12 +19,18 @@ int PatientController::weight() const { return m_weight; }
 
 int PatientController::ibw() const
 {
+    // CLINICAL: Ideal Body Weight calculation uses Devine formula (1974).
+    // Verify with clinical SME before production deployment.
+
     const double base = m_gender == QStringLiteral("Male") ? 50.0 : 45.5;
     return qRound(base + 0.91 * (m_height - 152.4));
 }
 
 int PatientController::recommendedVt() const
 {
+    // CLINICAL: Tidal volume recommendation uses 6 mL/kg IBW (ARDSNet).
+    // Adjust range per institutional protocol (6-8 mL/kg typical).
+
     return qMax(20, ibw() * 6);
 }
 
