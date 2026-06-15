@@ -53,7 +53,7 @@ Item {
                             font.pixelSize: Typography.subtitle
                             font.weight: Font.DemiBold
                         }
-                        Slider {
+                        StyledSlider {
                             width: parent.width - 440
                             anchors.verticalCenter: parent.verticalCenter
                             from: sliderRow.modelData.min

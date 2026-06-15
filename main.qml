@@ -34,6 +34,19 @@ ApplicationWindow {
     property bool ventilationActive: ventilatorModel.running
     property bool alarmVisible: alarmModel.active
     property bool splashActive: true
+    property string clinicalAutomationStatus: ""
+
+    function updateColorMode() {
+        var mode = appSettings.dayNightMode
+        var hour = new Date().getHours()
+        var nightStart = appSettings.nightStartHour
+        var dayStart = appSettings.dayStartHour
+        var scheduledNight = nightStart > dayStart
+            ? (hour >= nightStart || hour < dayStart)
+            : (hour >= nightStart && hour < dayStart)
+        Colors.nightMode = mode === "Night"
+            || (mode === "Automatic" && scheduledNight)
+    }
 
     function navigateToScreen() {
         if (root.currentScreen === "login")
@@ -46,6 +59,12 @@ ApplicationWindow {
             return modeScreen
         if (root.currentScreen === "controls")
             return controlsScreen
+        if (root.currentScreen === "trends")
+            return trendsScreen
+        if (root.currentScreen === "loops")
+            return loopsScreen
+        if (root.currentScreen === "clinical")
+            return clinicalScreen
         if (root.currentScreen === "alarms")
             return alarmScreen
         if (root.currentScreen === "system")
@@ -75,6 +94,8 @@ ApplicationWindow {
         showAlarm: root.alarmVisible
         mode: ventilatorModel.mode
         patientCategory: patientModel.category
+        patientData: patientModel
+        automationStatus: root.clinicalAutomationStatus
     }
 
     Control {
@@ -108,6 +129,25 @@ ApplicationWindow {
         softwareVersion: appSettings.softwareVersion
         operatingHours: appSettings.operatingHours
         onFinished: root.splashActive = false
+    }
+
+    Component.onCompleted: root.updateColorMode()
+
+    Connections {
+        target: appSettings
+        function onDayNightModeChanged() {
+            root.updateColorMode()
+        }
+        function onDayNightScheduleChanged() {
+            root.updateColorMode()
+        }
+    }
+
+    Timer {
+        interval: 60000
+        running: appSettings.dayNightMode === "Automatic"
+        repeat: true
+        onTriggered: root.updateColorMode()
     }
 
     // IEC 60601-1-8 alarm audio: always alive in the root window so the
@@ -209,6 +249,35 @@ ApplicationWindow {
         ControlsScreen {
             patientData: root.patientModel
             ventilatorData: ventilatorModel
+        }
+    }
+
+    Component {
+        id: trendsScreen
+        TrendsScreen {
+            ventilatorData: ventilatorModel
+            databaseData: databaseManager
+        }
+    }
+
+    Component {
+        id: loopsScreen
+        LoopsScreen {
+            ventilatorData: ventilatorModel
+        }
+    }
+
+    Component {
+        id: clinicalScreen
+        ClinicalScreen {
+            patientData: patientModel
+            ventilatorData: ventilatorModel
+            eventData: eventModel
+            databaseData: databaseManager
+            alarmData: alarmModel
+            appSettingsData: appSettings
+            onGlobalStatusChanged: root.clinicalAutomationStatus = globalStatus
+            Component.onCompleted: root.clinicalAutomationStatus = globalStatus
         }
     }
 

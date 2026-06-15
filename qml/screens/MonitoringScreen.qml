@@ -155,8 +155,10 @@ Control {
                             title: "Pressure Paw"
                             traceColor: Colors.success
                             samples: root.ventilatorData.pressureWaveform
+                            frozen: root.ventilatorData.frozen
                             minimumValue: 0
                             maximumValue: 45
+                            unit: "cmH2O"
                         }
                         WaveformChart {
                             visible: root.layoutPreset >= 2
@@ -165,8 +167,10 @@ Control {
                             title: "Flow"
                             traceColor: Colors.magenta
                             samples: root.ventilatorData.flowWaveform
+                            frozen: root.ventilatorData.frozen
                             minimumValue: -85
                             maximumValue: 85
+                            unit: "L/min"
                         }
                         WaveformChart {
                             visible: root.layoutPreset >= 3
@@ -175,8 +179,10 @@ Control {
                             title: "Volume"
                             traceColor: Colors.warning
                             samples: root.ventilatorData.volumeWaveform
+                            frozen: root.ventilatorData.frozen
                             minimumValue: 0
-                            maximumValue: 90
+                            maximumValue: 900
+                            unit: "mL"
                         }
                         WaveformChart {
                             visible: root.layoutPreset >= 4
@@ -185,8 +191,10 @@ Control {
                             title: "PCO2"
                             traceColor: Colors.accentBlue
                             samples: root.ventilatorData.co2Waveform
+                            frozen: root.ventilatorData.frozen
                             minimumValue: 0
                             maximumValue: 50
+                            unit: "mmHg"
                         }
                         // Compact parameter grid
                         Row {

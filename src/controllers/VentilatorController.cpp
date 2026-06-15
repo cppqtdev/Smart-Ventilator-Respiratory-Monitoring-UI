@@ -335,7 +335,7 @@ void VentilatorController::updateSimulation()
 
     appendSample(m_pressureWaveform, paw); // BIND: pressure sensor stream
     appendSample(m_flowWaveform, flow); // BIND: flow sensor stream
-    appendSample(m_volumeWaveform, volume / 10.0); // BIND: volume integration stream
+    appendSample(m_volumeWaveform, volume); // BIND: volume integration stream (mL)
     appendSample(m_co2Waveform, co2); // BIND: CO2 sensor stream
 
     evaluateAlarms();

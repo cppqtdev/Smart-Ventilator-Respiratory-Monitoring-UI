@@ -86,8 +86,10 @@ Control {
                         samples: root.ventilatorData
                             ? root.ventilatorData.pressureWaveform
                             : []
+                        frozen: root.ventilatorData ? root.ventilatorData.frozen : false
                         minimumValue: 0
                         maximumValue: 45
+                        unit: "cmH2O"
                     }
 
                     WaveformChart {
@@ -98,8 +100,10 @@ Control {
                         samples: root.ventilatorData
                             ? root.ventilatorData.flowWaveform
                             : []
+                        frozen: root.ventilatorData ? root.ventilatorData.frozen : false
                         minimumValue: -85
                         maximumValue: 85
+                        unit: "L/min"
                     }
 
                     WaveformChart {
@@ -110,8 +114,10 @@ Control {
                         samples: root.ventilatorData
                             ? root.ventilatorData.volumeWaveform
                             : []
+                        frozen: root.ventilatorData ? root.ventilatorData.frozen : false
                         minimumValue: 0
-                        maximumValue: 90
+                        maximumValue: 900
+                        unit: "mL"
                     }
                 }
             }

@@ -178,21 +178,11 @@ Page {
                                                 font.pixelSize: Typography.caption
                                             }
 
-                                            TextField {
+                                            StyledTextField {
                                                 Layout.fillWidth: true
-                                                Layout.preferredHeight: 48
-                                                leftPadding: 14
                                                 placeholderText: "Enter username (min 3 chars)"
                                                 text: root.formUsername
                                                 onTextChanged: root.formUsername = text
-                                                color: Colors.textPrimary
-                                                font.pixelSize: Typography.body
-
-                                                background: Rectangle {
-                                                    radius: Radius.small
-                                                    color: Colors.background
-                                                    border.color: Colors.line
-                                                }
                                             }
 
                                             Item { width: 1; height: 4 }
@@ -204,21 +194,11 @@ Page {
                                                 font.pixelSize: Typography.caption
                                             }
 
-                                            TextField {
+                                            StyledTextField {
                                                 Layout.fillWidth: true
-                                                Layout.preferredHeight: 48
-                                                leftPadding: 14
                                                 placeholderText: "Dr. John Smith"
                                                 text: root.formFullName
                                                 onTextChanged: root.formFullName = text
-                                                color: Colors.textPrimary
-                                                font.pixelSize: Typography.body
-
-                                                background: Rectangle {
-                                                    radius: Radius.small
-                                                    color: Colors.background
-                                                    border.color: Colors.line
-                                                }
                                             }
                                         }
 
@@ -236,23 +216,13 @@ Page {
                                                     font.pixelSize: Typography.caption
                                                 }
 
-                                                TextField {
+                                                StyledTextField {
                                                     Layout.fillWidth: true
-                                                    Layout.preferredHeight: 48
-                                                    leftPadding: 14
                                                     placeholderText: "0000"
                                                     text: root.formPin
                                                     onTextChanged: root.formPin = text
                                                     maximumLength: 4
                                                     echoMode: TextInput.Password
-                                                    color: Colors.textPrimary
-                                                    font.pixelSize: Typography.body
-
-                                                    background: Rectangle {
-                                                        radius: Radius.small
-                                                        color: Colors.background
-                                                        border.color: Colors.line
-                                                    }
                                                 }
 
                                                 Item { width: 1; height: 4 }
@@ -474,7 +444,8 @@ Page {
                                                     height: 38
                                                     text: "Delete"
                                                     buttonColor: Colors.critical
-                                                    visible: userRow.modelData.username
+                                                    visible: root.userControllerData
+                                                             && userRow.modelData.username
                                                              !== root.userControllerData
                                                     .currentUser
                                                     onClicked: root.userControllerData
@@ -607,24 +578,14 @@ Page {
                                             font.weight: Font.DemiBold
                                         }
 
-                                        TextField {
+                                        StyledTextField {
                                             Layout.fillWidth: true
-                                            Layout.preferredHeight: 48
-                                            leftPadding: 14
                                             placeholderText: "Enter 4-digit PIN"
                                             text: root.pwdNewPin
                                             onTextChanged: root.pwdNewPin = text
                                             maximumLength: 4
                                             echoMode: TextInput.Password
-                                            color: Colors.textPrimary
-                                            font.pixelSize: Typography.label
                                             font.family: Typography.monoFamily
-
-                                            background: Rectangle {
-                                                radius: Radius.small
-                                                color: Colors.background
-                                                border.color: Colors.line
-                                            }
                                         }
                                     }
 
@@ -641,23 +602,22 @@ Page {
                                             font.weight: Font.DemiBold
                                         }
 
-                                        TextField {
+                                        StyledTextField {
                                             Layout.fillWidth: true
-                                            Layout.preferredHeight: 48
-                                            leftPadding: 14
                                             placeholderText: "Re-enter PIN"
                                             text: root.pwdConfirmPin
                                             onTextChanged: root.pwdConfirmPin = text
                                             maximumLength: 4
                                             echoMode: TextInput.Password
-                                            color: Colors.textPrimary
-                                            font.pixelSize: Typography.label
                                             font.family: Typography.monoFamily
 
                                             background: Rectangle {
+                                                implicitHeight: 48
                                                 radius: Radius.small
                                                 color: Colors.background
-                                                border.color: root.pwdConfirmPin.length === 4 && root.pwdConfirmPin !== root.pwdNewPin ? Colors.critical : Colors.line
+                                                border.color: root.pwdConfirmPin.length === 4
+                                                    && root.pwdConfirmPin !== root.pwdNewPin
+                                                    ? Colors.critical : Colors.line
                                                 border.width: root.pwdConfirmPin.length === 4 && root.pwdConfirmPin !== root.pwdNewPin ? 2 : 1
                                             }
                                         }

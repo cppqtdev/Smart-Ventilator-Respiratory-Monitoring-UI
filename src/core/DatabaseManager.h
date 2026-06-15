@@ -84,6 +84,30 @@ public:
      */
     Q_INVOKABLE bool verifyAuditTrail();
 
+    /**
+     * @brief Queries parameter snapshots from the last N minutes.
+     * @param minutes  Time window in minutes (e.g. 60, 360, 720, 1440).
+     * @return List of snapshot maps with timestamp and all parameter values.
+     */
+    Q_INVOKABLE QVariantList getParameterHistory(int minutes) const;
+    Q_INVOKABLE QString exportClinicalSummary() const;
+    Q_INVOKABLE void saveClinicalState(const QString &key, const QVariant &value);
+    Q_INVOKABLE QVariantMap loadClinicalState() const;
+    Q_INVOKABLE void recordSbtSession(const QVariantMap &session);
+    Q_INVOKABLE void recordMaintenance(const QString &item, const QString &action);
+    Q_INVOKABLE QVariantList getSbtHistory(int limit = 20) const;
+    Q_INVOKABLE QVariantList getMaintenanceHistory(int limit = 20) const;
+    Q_INVOKABLE void recordManeuver(const QString &type, double result,
+                                    const QString &unit, const QString &notes);
+    Q_INVOKABLE QVariantList getManeuverHistory(int limit = 20) const;
+    Q_INVOKABLE void saveMaintenanceSchedule(const QString &item,
+                                             const QString &dueDate,
+                                             bool acknowledged);
+    Q_INVOKABLE QVariantList getMaintenanceSchedules() const;
+    Q_INVOKABLE void saveCentralPatient(const QVariantMap &patient);
+    Q_INVOKABLE QVariantList getCentralPatients() const;
+    Q_INVOKABLE QString exportAuditSummary() const;
+
 signals:
     /** @brief Emitted when a database write operation fails. */
     void errorOccurred(const QString &message);

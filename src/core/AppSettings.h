@@ -20,6 +20,8 @@ class AppSettings : public QObject
     Q_PROPERTY(QString dayNightMode READ dayNightMode WRITE setDayNightMode NOTIFY dayNightModeChanged)
     Q_PROPERTY(QString timeZoneId READ timeZoneId WRITE setTimeZoneId NOTIFY timeZoneIdChanged)
     Q_PROPERTY(int monitoringLayout READ monitoringLayout WRITE setMonitoringLayout NOTIFY monitoringLayoutChanged)
+    Q_PROPERTY(int nightStartHour READ nightStartHour WRITE setNightStartHour NOTIFY dayNightScheduleChanged)
+    Q_PROPERTY(int dayStartHour READ dayStartHour WRITE setDayStartHour NOTIFY dayNightScheduleChanged)
 
 public:
     explicit AppSettings(QObject *parent = nullptr);
@@ -40,6 +42,8 @@ public:
     QString timeZoneId() const;
     /** @return Active monitoring layout preset (1-5). */
     int monitoringLayout() const;
+    int nightStartHour() const;
+    int dayStartHour() const;
 
 public slots:
     /** @param hours Accumulated operating hours to store. */
@@ -56,6 +60,8 @@ public slots:
     void setTimeZoneId(const QString &value);
     /** @param value Monitoring layout preset (1-5). */
     void setMonitoringLayout(int value);
+    void setNightStartHour(int value);
+    void setDayStartHour(int value);
 
 signals:
     void operatingHoursChanged();
@@ -65,6 +71,7 @@ signals:
     void dayNightModeChanged();
     void timeZoneIdChanged();
     void monitoringLayoutChanged();
+    void dayNightScheduleChanged();
 
 private:
     QSettings m_settings;

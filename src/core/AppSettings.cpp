@@ -46,6 +46,16 @@ int AppSettings::monitoringLayout() const
     return m_settings.value(QStringLiteral("ui/monitoringLayout"), 1).toInt();
 }
 
+int AppSettings::nightStartHour() const
+{
+    return m_settings.value(QStringLiteral("ui/nightStartHour"), 20).toInt();
+}
+
+int AppSettings::dayStartHour() const
+{
+    return m_settings.value(QStringLiteral("ui/dayStartHour"), 6).toInt();
+}
+
 void AppSettings::setOperatingHours(double hours)
 {
     if (qFuzzyCompare(operatingHours(), hours))
@@ -101,4 +111,22 @@ void AppSettings::setMonitoringLayout(int value)
         return;
     m_settings.setValue(QStringLiteral("ui/monitoringLayout"), value);
     emit monitoringLayoutChanged();
+}
+
+void AppSettings::setNightStartHour(int value)
+{
+    value = qBound(0, value, 23);
+    if (nightStartHour() == value)
+        return;
+    m_settings.setValue(QStringLiteral("ui/nightStartHour"), value);
+    emit dayNightScheduleChanged();
+}
+
+void AppSettings::setDayStartHour(int value)
+{
+    value = qBound(0, value, 23);
+    if (dayStartHour() == value)
+        return;
+    m_settings.setValue(QStringLiteral("ui/dayStartHour"), value);
+    emit dayNightScheduleChanged();
 }

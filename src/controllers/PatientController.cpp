@@ -2,11 +2,13 @@
 #include "../core/DatabaseManager.h"
 
 #include <QtMath>
+#include <QDate>
 
 PatientController::PatientController(DatabaseManager *database, QObject *parent)
     : QObject(parent)
     , m_database(database)
 {
+    m_admitDate = QDate::currentDate().toString(Qt::ISODate);
     loadProfile();
 }
 
@@ -16,6 +18,10 @@ QString PatientController::gender() const { return m_gender; }
 int PatientController::age() const { return m_age; }
 int PatientController::height() const { return m_height; }
 int PatientController::weight() const { return m_weight; }
+QString PatientController::patientId() const { return m_patientId; }
+QString PatientController::bedNumber() const { return m_bedNumber; }
+QString PatientController::physician() const { return m_physician; }
+QString PatientController::admitDate() const { return m_admitDate; }
 
 int PatientController::ibw() const
 {
@@ -94,6 +100,34 @@ void PatientController::setWeight(int value)
     emit patientChanged();
 }
 
+void PatientController::setPatientId(const QString &value)
+{
+    if (m_patientId == value) return;
+    m_patientId = value;
+    emit patientChanged();
+}
+
+void PatientController::setBedNumber(const QString &value)
+{
+    if (m_bedNumber == value) return;
+    m_bedNumber = value;
+    emit patientChanged();
+}
+
+void PatientController::setPhysician(const QString &value)
+{
+    if (m_physician == value) return;
+    m_physician = value;
+    emit patientChanged();
+}
+
+void PatientController::setAdmitDate(const QString &value)
+{
+    if (m_admitDate == value) return;
+    m_admitDate = value;
+    emit patientChanged();
+}
+
 void PatientController::saveProfile()
 {
     if (!m_database)
@@ -107,6 +141,10 @@ void PatientController::saveProfile()
         { QStringLiteral("weight"),   m_weight },
         { QStringLiteral("ibw"),      ibw() }
     });
+    m_database->saveClinicalState(QStringLiteral("patientId"), m_patientId);
+    m_database->saveClinicalState(QStringLiteral("bedNumber"), m_bedNumber);
+    m_database->saveClinicalState(QStringLiteral("physician"), m_physician);
+    m_database->saveClinicalState(QStringLiteral("admitDate"), m_admitDate);
 }
 
 void PatientController::loadProfile()
@@ -115,13 +153,18 @@ void PatientController::loadProfile()
         return;
 
     const QVariantMap profile = m_database->loadLastPatientProfile();
-    if (profile.isEmpty())
-        return;
+    if (!profile.isEmpty()) {
+        m_category = profile.value(QStringLiteral("category"), m_category).toString();
+        m_gender   = profile.value(QStringLiteral("gender"), m_gender).toString();
+        m_age      = profile.value(QStringLiteral("age"), m_age).toInt();
+        m_height   = profile.value(QStringLiteral("height"), m_height).toInt();
+        m_weight   = profile.value(QStringLiteral("weight"), m_weight).toInt();
+    }
 
-    m_category = profile.value(QStringLiteral("category"), m_category).toString();
-    m_gender   = profile.value(QStringLiteral("gender"), m_gender).toString();
-    m_age      = profile.value(QStringLiteral("age"), m_age).toInt();
-    m_height   = profile.value(QStringLiteral("height"), m_height).toInt();
-    m_weight   = profile.value(QStringLiteral("weight"), m_weight).toInt();
+    const QVariantMap state = m_database->loadClinicalState();
+    m_patientId = state.value(QStringLiteral("patientId"), m_patientId).toString();
+    m_bedNumber = state.value(QStringLiteral("bedNumber"), m_bedNumber).toString();
+    m_physician = state.value(QStringLiteral("physician"), m_physician).toString();
+    m_admitDate = state.value(QStringLiteral("admitDate"), m_admitDate).toString();
     emit patientChanged();
 }

@@ -20,7 +20,7 @@ TabBar {
         height: 74
     }
 
-    spacing: 10
+    spacing: 6
 
     NavTabButton {
         text: "Monitoring"
@@ -31,6 +31,24 @@ TabBar {
     NavTabButton {
         text: "Controls"
         screen: "controls"
+        onClicked: root.navigate(screen)
+    }
+
+    NavTabButton {
+        text: "Trends"
+        screen: "trends"
+        onClicked: root.navigate(screen)
+    }
+
+    NavTabButton {
+        text: "Loops"
+        screen: "loops"
+        onClicked: root.navigate(screen)
+    }
+
+    NavTabButton {
+        text: "Clinical"
+        screen: "clinical"
         onClicked: root.navigate(screen)
     }
 
@@ -78,7 +96,7 @@ TabBar {
 
     component NavTabButton: PrefsTabButton {
         property string screen: ""
-        font.pixelSize: Typography.label
+        font.pixelSize: Typography.small
         font.weight: Font.Bold
     }
 }

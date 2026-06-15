@@ -7,6 +7,9 @@
 #include <QStandardPaths>
 #include <QVariant>
 #include <QDebug>
+#include <QFile>
+#include <QFileInfo>
+#include <QTextStream>
 
 DatabaseManager::DatabaseManager(QObject *parent)
     : QObject(parent)
@@ -110,7 +113,43 @@ bool DatabaseManager::executeSchema()
         "spo2 REAL NOT NULL,"
         "etco2 REAL NOT NULL,"
         "compliance REAL NOT NULL,"
-        "resistance REAL NOT NULL)"
+        "resistance REAL NOT NULL)",
+        "CREATE TABLE IF NOT EXISTS clinical_state ("
+        "key TEXT PRIMARY KEY,"
+        "value TEXT NOT NULL,"
+        "updated_at TEXT NOT NULL)",
+        "CREATE TABLE IF NOT EXISTS sbt_sessions ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "created_at TEXT NOT NULL,"
+        "status TEXT NOT NULL,"
+        "rsbi REAL NOT NULL,"
+        "spo2 REAL NOT NULL,"
+        "fio2 REAL NOT NULL,"
+        "peep REAL NOT NULL)",
+        "CREATE TABLE IF NOT EXISTS maintenance_log ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "created_at TEXT NOT NULL,"
+        "item TEXT NOT NULL,"
+        "action TEXT NOT NULL)",
+        "CREATE TABLE IF NOT EXISTS maneuver_results ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "created_at TEXT NOT NULL,"
+        "type TEXT NOT NULL,"
+        "result REAL NOT NULL,"
+        "unit TEXT NOT NULL,"
+        "notes TEXT NOT NULL)",
+        "CREATE TABLE IF NOT EXISTS maintenance_schedules ("
+        "item TEXT PRIMARY KEY,"
+        "due_date TEXT NOT NULL,"
+        "acknowledged INTEGER NOT NULL DEFAULT 0,"
+        "updated_at TEXT NOT NULL)",
+        "CREATE TABLE IF NOT EXISTS central_patients ("
+        "bed TEXT PRIMARY KEY,"
+        "patient_id TEXT NOT NULL,"
+        "spo2 REAL NOT NULL,"
+        "ppeak REAL NOT NULL,"
+        "status TEXT NOT NULL,"
+        "updated_at TEXT NOT NULL)"
     };
 
     for (const char *statement : schema) {
@@ -295,4 +334,344 @@ bool DatabaseManager::verifyAuditTrail()
     }
 
     return true;
+}
+
+QVariantList DatabaseManager::getParameterHistory(int minutes) const
+{
+    QVariantList result;
+    if (!m_database.isOpen())
+        return result;
+
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "SELECT created_at, ppeak, pplat, pmean, spo2, etco2, "
+        "fio2, peep, minute_volume, tidal_volume, respiratory_rate, "
+        "compliance, resistance "
+        "FROM parameter_snapshots "
+        "WHERE datetime(created_at) >= datetime('now', ?) "
+        "ORDER BY id ASC"));
+    query.addBindValue(QStringLiteral("-%1 minutes").arg(qBound(1, minutes, 1440)));
+
+    if (!query.exec())
+        return result;
+
+    while (query.next()) {
+        result.append(QVariantMap{
+            { QStringLiteral("time"),      query.value(0).toString() },
+            { QStringLiteral("ppeak"),     query.value(1).toDouble() },
+            { QStringLiteral("pplat"),     query.value(2).toDouble() },
+            { QStringLiteral("pmean"),     query.value(3).toDouble() },
+            { QStringLiteral("spo2"),      query.value(4).toDouble() },
+            { QStringLiteral("etco2"),     query.value(5).toDouble() },
+            { QStringLiteral("fio2"),      query.value(6).toInt() },
+            { QStringLiteral("peep"),      query.value(7).toInt() },
+            { QStringLiteral("mv"),        query.value(8).toInt() },
+            { QStringLiteral("vt"),        query.value(9).toInt() },
+            { QStringLiteral("rr"),        query.value(10).toInt() },
+            { QStringLiteral("compliance"),query.value(11).toDouble() },
+            { QStringLiteral("resistance"),query.value(12).toDouble() }
+        });
+    }
+    return result;
+}
+
+QString DatabaseManager::exportClinicalSummary() const
+{
+    if (!m_database.isOpen())
+        return {};
+
+    const QString path = QFileInfo(m_databasePath).absolutePath()
+        + QStringLiteral("/clinical_export_%1.csv")
+              .arg(QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd_HHmmss")));
+    QFile file(path);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        return {};
+
+    QTextStream out(&file);
+    out << "timestamp,mode,ppeak,spo2,etco2,fio2,peep,tidal_volume,respiratory_rate\n";
+    QSqlQuery query(m_database);
+    if (query.exec(QStringLiteral(
+            "SELECT created_at,mode,ppeak,spo2,etco2,fio2,peep,tidal_volume,"
+            "respiratory_rate FROM parameter_snapshots ORDER BY id DESC LIMIT 500"))) {
+        while (query.next()) {
+            for (int i = 0; i < 9; ++i) {
+                if (i) out << ',';
+                QString value = query.value(i).toString();
+                value.replace('"', QStringLiteral("\"\""));
+                out << '"' << value << '"';
+            }
+            out << '\n';
+        }
+    }
+    return path;
+}
+
+void DatabaseManager::saveClinicalState(const QString &key, const QVariant &value)
+{
+    if (!m_database.isOpen() || key.trimmed().isEmpty())
+        return;
+
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "INSERT INTO clinical_state(key,value,updated_at) VALUES(?,?,?) "
+        "ON CONFLICT(key) DO UPDATE SET value=excluded.value,"
+        "updated_at=excluded.updated_at"));
+    query.addBindValue(key);
+    query.addBindValue(value.toString());
+    query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+    if (!query.exec())
+        setError(QStringLiteral("Unable to save clinical state: ") + query.lastError().text());
+}
+
+QVariantMap DatabaseManager::loadClinicalState() const
+{
+    QVariantMap result;
+    if (!m_database.isOpen())
+        return result;
+
+    QSqlQuery query(m_database);
+    if (!query.exec(QStringLiteral("SELECT key,value FROM clinical_state")))
+        return result;
+    while (query.next())
+        result.insert(query.value(0).toString(), query.value(1));
+    return result;
+}
+
+void DatabaseManager::recordSbtSession(const QVariantMap &session)
+{
+    if (!m_database.isOpen())
+        return;
+
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "INSERT INTO sbt_sessions(created_at,status,rsbi,spo2,fio2,peep) "
+        "VALUES(?,?,?,?,?,?)"));
+    query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+    query.addBindValue(session.value(QStringLiteral("status")));
+    query.addBindValue(session.value(QStringLiteral("rsbi")));
+    query.addBindValue(session.value(QStringLiteral("spo2")));
+    query.addBindValue(session.value(QStringLiteral("fio2")));
+    query.addBindValue(session.value(QStringLiteral("peep")));
+    if (!query.exec())
+        setError(QStringLiteral("Unable to record SBT session: ") + query.lastError().text());
+}
+
+void DatabaseManager::recordMaintenance(const QString &item, const QString &action)
+{
+    if (!m_database.isOpen())
+        return;
+
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "INSERT INTO maintenance_log(created_at,item,action) VALUES(?,?,?)"));
+    query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+    query.addBindValue(item);
+    query.addBindValue(action);
+    if (!query.exec())
+        setError(QStringLiteral("Unable to record maintenance: ") + query.lastError().text());
+}
+
+QVariantList DatabaseManager::getSbtHistory(int limit) const
+{
+    QVariantList result;
+    if (!m_database.isOpen())
+        return result;
+
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "SELECT created_at,status,rsbi,spo2,fio2,peep "
+        "FROM sbt_sessions ORDER BY id DESC LIMIT ?"));
+    query.addBindValue(qBound(1, limit, 200));
+    if (!query.exec())
+        return result;
+
+    while (query.next()) {
+        result.append(QVariantMap{
+            { QStringLiteral("time"), query.value(0).toString() },
+            { QStringLiteral("status"), query.value(1).toString() },
+            { QStringLiteral("rsbi"), query.value(2).toDouble() },
+            { QStringLiteral("spo2"), query.value(3).toDouble() },
+            { QStringLiteral("fio2"), query.value(4).toDouble() },
+            { QStringLiteral("peep"), query.value(5).toDouble() }
+        });
+    }
+    return result;
+}
+
+QVariantList DatabaseManager::getMaintenanceHistory(int limit) const
+{
+    QVariantList result;
+    if (!m_database.isOpen())
+        return result;
+
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "SELECT created_at,item,action FROM maintenance_log "
+        "ORDER BY id DESC LIMIT ?"));
+    query.addBindValue(qBound(1, limit, 200));
+    if (!query.exec())
+        return result;
+
+    while (query.next()) {
+        result.append(QVariantMap{
+            { QStringLiteral("time"), query.value(0).toString() },
+            { QStringLiteral("item"), query.value(1).toString() },
+            { QStringLiteral("action"), query.value(2).toString() }
+        });
+    }
+    return result;
+}
+
+void DatabaseManager::recordManeuver(const QString &type, double result,
+                                     const QString &unit, const QString &notes)
+{
+    if (!m_database.isOpen())
+        return;
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "INSERT INTO maneuver_results(created_at,type,result,unit,notes) "
+        "VALUES(?,?,?,?,?)"));
+    query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+    query.addBindValue(type);
+    query.addBindValue(result);
+    query.addBindValue(unit);
+    query.addBindValue(notes);
+    if (!query.exec())
+        setError(QStringLiteral("Unable to record maneuver: ") + query.lastError().text());
+}
+
+QVariantList DatabaseManager::getManeuverHistory(int limit) const
+{
+    QVariantList result;
+    if (!m_database.isOpen())
+        return result;
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "SELECT created_at,type,result,unit,notes FROM maneuver_results "
+        "ORDER BY id DESC LIMIT ?"));
+    query.addBindValue(qBound(1, limit, 200));
+    if (!query.exec())
+        return result;
+    while (query.next()) {
+        result.append(QVariantMap{
+            { QStringLiteral("time"), query.value(0).toString() },
+            { QStringLiteral("type"), query.value(1).toString() },
+            { QStringLiteral("result"), query.value(2).toDouble() },
+            { QStringLiteral("unit"), query.value(3).toString() },
+            { QStringLiteral("notes"), query.value(4).toString() }
+        });
+    }
+    return result;
+}
+
+void DatabaseManager::saveMaintenanceSchedule(const QString &item,
+                                              const QString &dueDate,
+                                              bool acknowledged)
+{
+    if (!m_database.isOpen() || item.trimmed().isEmpty())
+        return;
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "INSERT INTO maintenance_schedules(item,due_date,acknowledged,updated_at) "
+        "VALUES(?,?,?,?) ON CONFLICT(item) DO UPDATE SET "
+        "due_date=excluded.due_date,acknowledged=excluded.acknowledged,"
+        "updated_at=excluded.updated_at"));
+    query.addBindValue(item);
+    query.addBindValue(dueDate);
+    query.addBindValue(acknowledged ? 1 : 0);
+    query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+    if (!query.exec())
+        setError(QStringLiteral("Unable to save maintenance schedule: ") + query.lastError().text());
+}
+
+QVariantList DatabaseManager::getMaintenanceSchedules() const
+{
+    QVariantList result;
+    if (!m_database.isOpen())
+        return result;
+    QSqlQuery query(m_database);
+    if (!query.exec(QStringLiteral(
+            "SELECT item,due_date,acknowledged FROM maintenance_schedules "
+            "ORDER BY due_date ASC")))
+        return result;
+    while (query.next()) {
+        result.append(QVariantMap{
+            { QStringLiteral("item"), query.value(0).toString() },
+            { QStringLiteral("dueDate"), query.value(1).toString() },
+            { QStringLiteral("acknowledged"), query.value(2).toBool() }
+        });
+    }
+    return result;
+}
+
+void DatabaseManager::saveCentralPatient(const QVariantMap &patient)
+{
+    if (!m_database.isOpen())
+        return;
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "INSERT INTO central_patients(bed,patient_id,spo2,ppeak,status,updated_at) "
+        "VALUES(?,?,?,?,?,?) ON CONFLICT(bed) DO UPDATE SET "
+        "patient_id=excluded.patient_id,spo2=excluded.spo2,ppeak=excluded.ppeak,"
+        "status=excluded.status,updated_at=excluded.updated_at"));
+    query.addBindValue(patient.value(QStringLiteral("bed")));
+    query.addBindValue(patient.value(QStringLiteral("patientId")));
+    query.addBindValue(patient.value(QStringLiteral("spo2")));
+    query.addBindValue(patient.value(QStringLiteral("ppeak")));
+    query.addBindValue(patient.value(QStringLiteral("status")));
+    query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+    if (!query.exec())
+        setError(QStringLiteral("Unable to save central patient: ") + query.lastError().text());
+}
+
+QVariantList DatabaseManager::getCentralPatients() const
+{
+    QVariantList result;
+    if (!m_database.isOpen())
+        return result;
+    QSqlQuery query(m_database);
+    if (!query.exec(QStringLiteral(
+            "SELECT bed,patient_id,spo2,ppeak,status FROM central_patients "
+            "ORDER BY bed ASC")))
+        return result;
+    while (query.next()) {
+        result.append(QVariantMap{
+            { QStringLiteral("bed"), query.value(0).toString() },
+            { QStringLiteral("patientId"), query.value(1).toString() },
+            { QStringLiteral("spo2"), query.value(2).toDouble() },
+            { QStringLiteral("ppeak"), query.value(3).toDouble() },
+            { QStringLiteral("status"), query.value(4).toString() }
+        });
+    }
+    return result;
+}
+
+QString DatabaseManager::exportAuditSummary() const
+{
+    if (!m_database.isOpen())
+        return {};
+    const QString path = QFileInfo(m_databasePath).absolutePath()
+        + QStringLiteral("/audit_export_%1.csv")
+              .arg(QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd_HHmmss")));
+    QFile file(path);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        return {};
+    QTextStream out(&file);
+    out << "timestamp,type,source,description,status\n";
+    QSqlQuery query(m_database);
+    if (query.exec(QStringLiteral(
+            "SELECT created_at,'Event',source,description,status FROM events "
+            "UNION ALL SELECT created_at,'Alarm',source,description,status FROM alarms "
+            "ORDER BY created_at DESC LIMIT 1000"))) {
+        while (query.next()) {
+            for (int i = 0; i < 5; ++i) {
+                if (i) out << ',';
+                QString value = query.value(i).toString();
+                value.replace('"', QStringLiteral("\"\""));
+                out << '"' << value << '"';
+            }
+            out << '\n';
+        }
+    }
+    return path;
 }

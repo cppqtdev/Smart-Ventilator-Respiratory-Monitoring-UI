@@ -15,8 +15,21 @@ Panel {
     property real minimumValue: 0
     property real maximumValue: 40
     property string unit: ""
+    property bool frozen: false
+    property real cursorA: -1
+    property real cursorB: -1
+    property real displaySeconds: 8.1
 
     readonly property int maxSamples: 180
+
+    function valueAtCursor(cursorX) {
+        if (!root.samples || root.samples.length === 0 || cursorX < 0)
+            return 0
+        var index = Math.round(cursorX / Math.max(1, chartCanvas.width)
+                               * (root.samples.length - 1))
+        index = Math.max(0, Math.min(root.samples.length - 1, index))
+        return Number(root.samples[index])
+    }
 
     // Title label (colored to match trace)
     Text {
@@ -307,10 +320,99 @@ Panel {
             ctx.beginPath()
             ctx.arc(tip.x, tip.y, 1.5, 0, Math.PI * 2)
             ctx.fill()
+
+            if (root.frozen && root.cursorA >= 0) {
+                ctx.strokeStyle = Colors.warning
+                ctx.lineWidth = 1.5
+                ctx.setLineDash([4, 3])
+                ctx.beginPath()
+                ctx.moveTo(root.cursorA, 0)
+                ctx.lineTo(root.cursorA, h)
+                if (root.cursorB >= 0) {
+                    ctx.moveTo(root.cursorB, 0)
+                    ctx.lineTo(root.cursorB, h)
+                }
+                ctx.stroke()
+                ctx.setLineDash([])
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            enabled: root.frozen
+            onClicked: function(mouse) {
+                if (root.cursorA < 0 || root.cursorB >= 0) {
+                    root.cursorA = mouse.x
+                    root.cursorB = -1
+                } else {
+                    root.cursorB = mouse.x
+                }
+                chartCanvas.requestPaint()
+            }
+        }
+    }
+
+    Text {
+        visible: root.frozen && root.cursorA >= 0 && root.cursorB >= 0
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: 10
+        text: {
+            var a = root.valueAtCursor(root.cursorA)
+            var b = root.valueAtCursor(root.cursorB)
+            var dt = Math.abs(root.cursorB - root.cursorA)
+                / Math.max(1, chartCanvas.width) * root.displaySeconds
+            return "A " + a.toFixed(1) + "  B " + b.toFixed(1)
+                + "  Delta " + Math.abs(b - a).toFixed(1)
+                + (root.unit.length ? " " + root.unit : "")
+                + " / " + dt.toFixed(2) + " s"
+        }
+        color: Colors.warning
+        font.pixelSize: Typography.caption
+        font.family: Typography.monoFamily
+        z: 3
+    }
+
+    Row {
+        visible: root.frozen
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 14
+        anchors.bottomMargin: 8
+        spacing: 6
+        z: 3
+
+        Repeater {
+            model: [5, 10, 20]
+            Rectangle {
+                required property int modelData
+                width: 38
+                height: 24
+                radius: 4
+                color: root.displaySeconds === modelData
+                    ? Colors.accentBlue : Colors.surfaceRaised
+                Text {
+                    anchors.centerIn: parent
+                    text: modelData + "s"
+                    color: Colors.textPrimary
+                    font.pixelSize: 10
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: root.displaySeconds = parent.modelData
+                }
+            }
         }
     }
 
     onSamplesChanged: chartCanvas.requestPaint()
     onMinimumValueChanged: chartCanvas.requestPaint()
     onMaximumValueChanged: chartCanvas.requestPaint()
+    onFrozenChanged: {
+        if (!frozen) {
+            cursorA = -1
+            cursorB = -1
+        }
+        chartCanvas.requestPaint()
+    }
 }

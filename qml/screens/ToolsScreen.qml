@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 // -----------------------------------------------------------------------
 // File: ToolsScreen.qml
-// Description: Utility gauges and alarm log across three pages
+// Description: Alarm thresholds, monitoring limits, and event log
 // Part of: Smart Ventilator and Respiratory Monitoring UI
 // -----------------------------------------------------------------------
 
@@ -21,8 +21,10 @@ Page {
     property var eventData
 
     padding: 24
+    property int currentTab: 0
 
-    function loadScreen(screen) {
+    function selectTab(screen, index) {
+        root.currentTab = index
         mainLoader.sourceComponent = screen
     }
 
@@ -33,18 +35,11 @@ Page {
         border.width: 1
     }
 
-    property int currentTab: 0
-
-    function selectTab(screen, index) {
-        root.currentTab = index
-        loadScreen(screen)
-    }
-
     header: Control {
-        padding: 24
+        padding: 20
 
         contentItem: RowLayout {
-            spacing: 20
+            spacing: 14
 
             PrefsTabButton {
                 Layout.fillWidth: true
@@ -78,15 +73,44 @@ Page {
         id: pageOne
         Grid {
             columns: 3
-            spacing: 34
-            property real cellWidth: (width - spacing * 2) / 3
-            property real cellHeight: Math.max(190, (height - spacing) / 2)
-            PressureGroupBox {  labelText: "Apnea Time"; value: 20; maximumValue: 60; unit: "s" }
-            PressureGroupBox {  labelText: "PetCO2"; value: root.ventilatorData.etco2; maximumValue: 100; unit: "mmHg" }
-            PressureGroupBox {  labelText: "SpO2"; value: root.ventilatorData.spo2; maximumValue: 100; unit: "%" }
-            PressureGroupBox {  labelText: "Low Pressure"; value: 5; maximumValue: 40; unit: "cmH2O" }
-            PressureGroupBox {  labelText: "ExpMinVol"; value: Math.round(root.ventilatorData.expMinVol); maximumValue: 60; unit: "%" }
-            PressureGroupBox {  labelText: "VT Low"; value: 270; maximumValue: 900; unit: "mL" }
+            spacing: Spacing.panelGap
+
+            PressureGroupBox {
+                labelText: "Apnea Time"
+                value: 20
+                maximumValue: 60
+                unit: "s"
+            }
+            PressureGroupBox {
+                labelText: "PetCO2"
+                value: root.ventilatorData.etco2
+                maximumValue: 100
+                unit: "mmHg"
+            }
+            PressureGroupBox {
+                labelText: "SpO2"
+                value: root.ventilatorData.spo2
+                maximumValue: 100
+                unit: "%"
+            }
+            PressureGroupBox {
+                labelText: "Low Pressure"
+                value: 5
+                maximumValue: 40
+                unit: "cmH2O"
+            }
+            PressureGroupBox {
+                labelText: "ExpMinVol"
+                value: Math.round(root.ventilatorData.expMinVol)
+                maximumValue: 60
+                unit: "%"
+            }
+            PressureGroupBox {
+                labelText: "VT Low"
+                value: 270
+                maximumValue: 900
+                unit: "mL"
+            }
         }
     }
 
@@ -94,23 +118,60 @@ Page {
         id: pageTwo
         Grid {
             columns: 4
-            spacing: 28
-            property real cellWidth: (width - spacing * 3) / 4
-            property real cellHeight: Math.max(170, (height - spacing) / 2)
-            PressureGroupBox {  labelText: "Oxygen"; value: root.ventilatorData.fio2; unit: "%" }
-            PressureGroupBox {  labelText: "ExpMinVol"; value: 95; maximumValue: 200; unit: "%" }
-            PressureGroupBox {  labelText: "Ftotal"; value: root.ventilatorData.ftotal; maximumValue: 80; unit: "b/min" }
-            PressureGroupBox {  labelText: "VT"; value: root.ventilatorData.vte; maximumValue: 1000; unit: "mL" }
-            PressureGroupBox {  labelText: "Low PEEP"; value: 5; maximumValue: 30; unit: "cmH2O" }
-            PressureGroupBox {  labelText: "Leak"; value: 4; maximumValue: 20; unit: "%" }
-            PressureGroupBox {  labelText: "Reserve"; value: 0; maximumValue: 100; unit: "%" }
-            PressureGroupBox {  labelText: "VT High"; value: 270; maximumValue: 900; unit: "mL" }
+            spacing: Spacing.panelGap
+
+            PressureGroupBox {
+                labelText: "Oxygen"
+                value: root.ventilatorData.fio2
+                unit: "%"
+            }
+            PressureGroupBox {
+                labelText: "ExpMinVol"
+                value: 95
+                maximumValue: 200
+                unit: "%"
+            }
+            PressureGroupBox {
+                labelText: "Ftotal"
+                value: root.ventilatorData.ftotal
+                maximumValue: 80
+                unit: "b/min"
+            }
+            PressureGroupBox {
+                labelText: "VT"
+                value: root.ventilatorData.vte
+                maximumValue: 1000
+                unit: "mL"
+            }
+            PressureGroupBox {
+                labelText: "Low PEEP"
+                value: 5
+                maximumValue: 30
+                unit: "cmH2O"
+            }
+            PressureGroupBox {
+                labelText: "Leak"
+                value: 4
+                maximumValue: 20
+                unit: "%"
+            }
+            PressureGroupBox {
+                labelText: "Reserve"
+                value: 0
+                maximumValue: 100
+                unit: "%"
+            }
+            PressureGroupBox {
+                labelText: "VT High"
+                value: 270
+                maximumValue: 900
+                unit: "mL"
+            }
         }
     }
 
     Component {
         id: alarmLog
-
         EventsScreen {
             alarmData: root.alarmData
             eventData: root.eventData

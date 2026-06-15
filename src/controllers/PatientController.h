@@ -25,6 +25,10 @@ class PatientController : public QObject
     Q_PROPERTY(int ibw READ ibw NOTIFY patientChanged)
     Q_PROPERTY(int recommendedVt READ recommendedVt NOTIFY patientChanged)
     Q_PROPERTY(int recommendedRate READ recommendedRate NOTIFY patientChanged)
+    Q_PROPERTY(QString patientId READ patientId WRITE setPatientId NOTIFY patientChanged)
+    Q_PROPERTY(QString bedNumber READ bedNumber WRITE setBedNumber NOTIFY patientChanged)
+    Q_PROPERTY(QString physician READ physician WRITE setPhysician NOTIFY patientChanged)
+    Q_PROPERTY(QString admitDate READ admitDate WRITE setAdmitDate NOTIFY patientChanged)
 
 public:
     explicit PatientController(DatabaseManager *database = nullptr,
@@ -54,6 +58,10 @@ public:
     int recommendedVt() const;
     /** @return Recommended respiratory rate in breaths per minute. */
     int recommendedRate() const;
+    QString patientId() const;
+    QString bedNumber() const;
+    QString physician() const;
+    QString admitDate() const;
 
 public slots:
     /** @param value Patient category to set (e.g. "Adult", "Pediatric"). */
@@ -68,6 +76,10 @@ public slots:
     void setHeight(int value);
     /** @param value Patient weight in kilograms. */
     void setWeight(int value);
+    void setPatientId(const QString &value);
+    void setBedNumber(const QString &value);
+    void setPhysician(const QString &value);
+    void setAdmitDate(const QString &value);
 
 signals:
     void patientChanged();
@@ -80,4 +92,8 @@ private:
     int m_age = 54;
     int m_height = 178;
     int m_weight = 76;
+    QString m_patientId = QStringLiteral("ICU-24001");
+    QString m_bedNumber = QStringLiteral("ICU-07");
+    QString m_physician = QStringLiteral("Dr. Mehta");
+    QString m_admitDate;
 };
