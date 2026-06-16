@@ -4,6 +4,7 @@
 #include "src/core/DatabaseManager.h"
 
 #include <QtMath>
+#include <QSet>
 
 namespace {
 double clampDouble(double value, double low, double high)
@@ -94,6 +95,7 @@ QString VentilatorController::ventilationTime() const
         .arg(m, 2, 10, QLatin1Char('0'))
         .arg(s, 2, 10, QLatin1Char('0'));
 }
+QString VentilatorController::lastCommandMessage() const { return m_lastCommandMessage; }
 QVariantList VentilatorController::pressureWaveform() const { return m_pressureWaveform; }
 QVariantList VentilatorController::flowWaveform() const { return m_flowWaveform; }
 QVariantList VentilatorController::volumeWaveform() const { return m_volumeWaveform; }
@@ -101,6 +103,12 @@ QVariantList VentilatorController::co2Waveform() const { return m_co2Waveform; }
 
 void VentilatorController::startVentilation()
 {
+    QString reason;
+    if (!validateStart(&reason)) {
+        setCommandMessage(reason);
+        emit commandRejected(reason);
+        return;
+    }
     if (m_running)
         return;
     m_running = true;
@@ -110,6 +118,19 @@ void VentilatorController::startVentilation()
     if (m_database)
         m_database->logEvent(QStringLiteral("Ventilation"), QStringLiteral("Ventilation started"), QStringLiteral("Active"));
     emit runningChanged();
+}
+
+bool VentilatorController::requestStartVentilation()
+{
+    QString reason;
+    if (!validateStart(&reason)) {
+        setCommandMessage(reason);
+        emit commandRejected(reason);
+        return false;
+    }
+    startVentilation();
+    setCommandMessage(QStringLiteral("Ventilation started"));
+    return true;
 }
 
 void VentilatorController::stopVentilation()
@@ -150,139 +171,280 @@ void VentilatorController::runCalibration()
 
 void VentilatorController::setMode(const QString &value)
 {
-    if (m_mode == value)
-        return;
-    m_mode = value;
-    if (m_database)
-        m_database->logEvent(QStringLiteral("Mode"), QStringLiteral("Mode changed to ") + value);
-    emit settingsChanged();
+    requestModeChange(value);
 }
 
 void VentilatorController::setFio2(int value)
 {
-    value = qBound(21, value, 100);
-    if (m_fio2 == value)
-        return;
-    m_fio2 = value;
-    emit settingsChanged();
+    applyParameterChange(QStringLiteral("fio2"), value, false);
 }
 
 void VentilatorController::setPeep(int value)
 {
-    value = qBound(0, value, 30);
-    if (m_peep == value)
-        return;
-    m_peep = value;
-    emit settingsChanged();
+    applyParameterChange(QStringLiteral("peep"), value, false);
 }
 
 void VentilatorController::setPressureSupport(int value)
 {
-    value = qBound(0, value, 40);
-    if (m_pressureSupport == value)
-        return;
-    m_pressureSupport = value;
-    emit settingsChanged();
+    applyParameterChange(QStringLiteral("pressureSupport"), value, false);
 }
 
 void VentilatorController::setInspiratoryTime(int value)
 {
-    value = qBound(1, value, 5);
-    if (m_inspiratoryTime == value)
-        return;
-    m_inspiratoryTime = value;
-    emit settingsChanged();
+    applyParameterChange(QStringLiteral("inspiratoryTime"), value, false);
 }
 
 void VentilatorController::setRespiratoryRate(int value)
 {
-    value = qBound(4, value, 60);
-    if (m_respiratoryRate == value)
-        return;
-    m_respiratoryRate = value;
-    emit settingsChanged();
+    applyParameterChange(QStringLiteral("respiratoryRate"), value, false);
 }
 
 void VentilatorController::setTrigger(int value)
 {
-    value = qBound(1, value, 10);
-    if (m_trigger == value)
-        return;
-    m_trigger = value;
-    emit settingsChanged();
+    applyParameterChange(QStringLiteral("trigger"), value, false);
 }
 
 void VentilatorController::setMinuteVolume(int value)
 {
-    value = qBound(20, value, 400);
-    if (m_minuteVolume == value)
-        return;
-    m_minuteVolume = value;
-    emit settingsChanged();
+    applyParameterChange(QStringLiteral("minuteVolume"), value, false);
 }
 
 void VentilatorController::setTidalVolume(int value)
 {
-    value = qBound(20, value, 900);
-    if (m_tidalVolume == value)
-        return;
-    m_tidalVolume = value;
-    emit settingsChanged();
+    applyParameterChange(QStringLiteral("tidalVolume"), value, false);
 }
 
 void VentilatorController::setAlarmHighPressure(int value)
 {
-    value = qBound(10, value, 80);
-    if (m_alarmHighPressure == value) return;
-    m_alarmHighPressure = value;
-    emit settingsChanged();
+    applyAlarmLimitChange(QStringLiteral("highPressure"), value, false);
 }
 
 void VentilatorController::setAlarmLowPressure(int value)
 {
-    value = qBound(0, value, 40);
-    if (m_alarmLowPressure == value) return;
-    m_alarmLowPressure = value;
-    emit settingsChanged();
+    applyAlarmLimitChange(QStringLiteral("lowPressure"), value, false);
 }
 
 void VentilatorController::setAlarmApneaTime(int value)
 {
-    value = qBound(5, value, 60);
-    if (m_alarmApneaTime == value) return;
-    m_alarmApneaTime = value;
-    emit settingsChanged();
+    applyAlarmLimitChange(QStringLiteral("apneaTime"), value, false);
 }
 
 void VentilatorController::setAlarmLowVt(int value)
 {
-    value = qBound(20, value, 900);
-    if (m_alarmLowVt == value) return;
-    m_alarmLowVt = value;
-    emit settingsChanged();
+    applyAlarmLimitChange(QStringLiteral("lowVt"), value, false);
 }
 
 void VentilatorController::setAlarmHighMv(int value)
 {
-    value = qBound(1, value, 30);
-    if (m_alarmHighMv == value) return;
-    m_alarmHighMv = value;
-    emit settingsChanged();
+    applyAlarmLimitChange(QStringLiteral("highMv"), value, false);
 }
 
 void VentilatorController::setAlarmLowSpo2(int value)
 {
-    value = qBound(70, value, 100);
-    if (m_alarmLowSpo2 == value) return;
-    m_alarmLowSpo2 = value;
-    emit settingsChanged();
+    applyAlarmLimitChange(QStringLiteral("lowSpo2"), value, false);
 }
 
 void VentilatorController::setApneaBackupEnabled(bool value)
 {
-    if (m_apneaBackupEnabled == value) return;
-    m_apneaBackupEnabled = value;
+    requestApneaBackupChange(value);
+}
+
+bool VentilatorController::requestModeChange(const QString &mode)
+{
+    QString reason;
+    if (!validateMode(mode, &reason)) {
+        setCommandMessage(reason);
+        emit commandRejected(reason);
+        return false;
+    }
+    if (m_mode == mode)
+        return true;
+    const QString oldMode = m_mode;
+    m_mode = mode;
+    logSettingChange(QStringLiteral("Mode"), oldMode, mode);
+    setCommandMessage(QStringLiteral("Mode changed to %1").arg(mode));
     emit settingsChanged();
+    return true;
+}
+
+bool VentilatorController::requestApneaBackupChange(bool enabled)
+{
+    if (m_apneaBackupEnabled == enabled)
+        return true;
+    const bool oldValue = m_apneaBackupEnabled;
+    m_apneaBackupEnabled = enabled;
+    logSettingChange(QStringLiteral("Apnea backup"), oldValue, enabled);
+    setCommandMessage(enabled ? QStringLiteral("Apnea backup enabled")
+                              : QStringLiteral("Apnea backup disabled"));
+    emit settingsChanged();
+    return true;
+}
+
+bool VentilatorController::requestParameterChange(const QString &parameter, int value)
+{
+    return applyParameterChange(parameter, value, true);
+}
+
+bool VentilatorController::requestAlarmLimitChange(const QString &limit, int value)
+{
+    return applyAlarmLimitChange(limit, value, true);
+}
+
+bool VentilatorController::applyParameterChange(const QString &parameter, int value, bool audited)
+{
+    int *target = nullptr;
+    int low = 0;
+    int high = 0;
+    QString label;
+    QString unit;
+
+    if (parameter == QStringLiteral("fio2")) {
+        target = &m_fio2; low = 21; high = 100; label = QStringLiteral("FiO2"); unit = QStringLiteral("%");
+    } else if (parameter == QStringLiteral("peep")) {
+        target = &m_peep; low = 0; high = qMin(30, m_alarmHighPressure - 5); label = QStringLiteral("PEEP"); unit = QStringLiteral("cmH2O");
+    } else if (parameter == QStringLiteral("pressureSupport")) {
+        target = &m_pressureSupport; low = 0; high = 40; label = QStringLiteral("Pressure support"); unit = QStringLiteral("cmH2O");
+    } else if (parameter == QStringLiteral("inspiratoryTime")) {
+        target = &m_inspiratoryTime; low = 1; high = 5; label = QStringLiteral("Inspiratory time"); unit = QStringLiteral("s");
+    } else if (parameter == QStringLiteral("respiratoryRate")) {
+        target = &m_respiratoryRate; low = 4; high = 60; label = QStringLiteral("Respiratory rate"); unit = QStringLiteral("1/min");
+    } else if (parameter == QStringLiteral("trigger")) {
+        target = &m_trigger; low = 1; high = 10; label = QStringLiteral("Trigger"); unit = QStringLiteral("L/min");
+    } else if (parameter == QStringLiteral("minuteVolume")) {
+        target = &m_minuteVolume; low = 20; high = 400; label = QStringLiteral("%MinVol"); unit = QStringLiteral("%");
+    } else if (parameter == QStringLiteral("tidalVolume")) {
+        target = &m_tidalVolume; low = 20; high = 900; label = QStringLiteral("Tidal volume"); unit = QStringLiteral("mL");
+    }
+
+    if (!target) {
+        const QString message = QStringLiteral("Unknown parameter: %1").arg(parameter);
+        setCommandMessage(message);
+        emit commandRejected(message);
+        return false;
+    }
+
+    const int requested = value;
+    value = qBound(low, value, high);
+    if (requested != value) {
+        const QString message = QStringLiteral("%1 limited to %2 %3").arg(label).arg(value).arg(unit);
+        setCommandMessage(message);
+        emit commandRejected(message);
+        return false;
+    }
+
+    if (*target == value)
+        return true;
+    const int oldValue = *target;
+    *target = value;
+    if (audited)
+        logSettingChange(label, oldValue, QStringLiteral("%1 %2").arg(value).arg(unit));
+    setCommandMessage(QStringLiteral("%1 set to %2 %3").arg(label).arg(value).arg(unit));
+    emit settingsChanged();
+    evaluateAlarms();
+    return true;
+}
+
+bool VentilatorController::applyAlarmLimitChange(const QString &limit, int value, bool audited)
+{
+    int *target = nullptr;
+    int low = 0;
+    int high = 0;
+    QString label;
+    QString unit;
+
+    if (limit == QStringLiteral("highPressure")) {
+        target = &m_alarmHighPressure; low = qMax(10, m_alarmLowPressure + 5); high = 80; label = QStringLiteral("High pressure alarm"); unit = QStringLiteral("cmH2O");
+    } else if (limit == QStringLiteral("lowPressure")) {
+        target = &m_alarmLowPressure; low = 0; high = qMin(40, m_alarmHighPressure - 5); label = QStringLiteral("Low pressure alarm"); unit = QStringLiteral("cmH2O");
+    } else if (limit == QStringLiteral("apneaTime")) {
+        target = &m_alarmApneaTime; low = 5; high = 60; label = QStringLiteral("Apnea time alarm"); unit = QStringLiteral("s");
+    } else if (limit == QStringLiteral("lowVt")) {
+        target = &m_alarmLowVt; low = 20; high = qMax(20, m_tidalVolume - 20); label = QStringLiteral("Low VT alarm"); unit = QStringLiteral("mL");
+    } else if (limit == QStringLiteral("highMv")) {
+        target = &m_alarmHighMv; low = 1; high = 30; label = QStringLiteral("High MV alarm"); unit = QStringLiteral("L/min");
+    } else if (limit == QStringLiteral("lowSpo2")) {
+        target = &m_alarmLowSpo2; low = 70; high = 100; label = QStringLiteral("Low SpO2 alarm"); unit = QStringLiteral("%");
+    }
+
+    if (!target) {
+        const QString message = QStringLiteral("Unknown alarm limit: %1").arg(limit);
+        setCommandMessage(message);
+        emit commandRejected(message);
+        return false;
+    }
+
+    const int requested = value;
+    value = qBound(low, value, high);
+    if (requested != value) {
+        const QString message = QStringLiteral("%1 limited to %2 %3").arg(label).arg(value).arg(unit);
+        setCommandMessage(message);
+        emit commandRejected(message);
+        return false;
+    }
+
+    if (*target == value)
+        return true;
+    const int oldValue = *target;
+    *target = value;
+    if (audited)
+        logSettingChange(label, oldValue, QStringLiteral("%1 %2").arg(value).arg(unit));
+    setCommandMessage(QStringLiteral("%1 set to %2 %3").arg(label).arg(value).arg(unit));
+    emit settingsChanged();
+    evaluateAlarms();
+    return true;
+}
+
+bool VentilatorController::validateMode(const QString &mode, QString *reason) const
+{
+    static const QSet<QString> supportedModes = {
+        QStringLiteral("VCV"), QStringLiteral("PCV"), QStringLiteral("SIMV"),
+        QStringLiteral("CPAP"), QStringLiteral("BiPAP"), QStringLiteral("ASV"),
+        QStringLiteral("PRVC"), QStringLiteral("PSV")
+    };
+    if (!supportedModes.contains(mode)) {
+        if (reason)
+            *reason = QStringLiteral("Unsupported ventilation mode: %1").arg(mode);
+        return false;
+    }
+    return true;
+}
+
+bool VentilatorController::validateStart(QString *reason) const
+{
+    if (m_alarmLowPressure >= m_alarmHighPressure) {
+        if (reason)
+            *reason = QStringLiteral("Cannot start: pressure alarm limits are invalid");
+        return false;
+    }
+    if (m_peep >= m_alarmHighPressure) {
+        if (reason)
+            *reason = QStringLiteral("Cannot start: PEEP is above the high pressure alarm limit");
+        return false;
+    }
+    if (m_tidalVolume < 20 || m_respiratoryRate < 4 || m_fio2 < 21) {
+        if (reason)
+            *reason = QStringLiteral("Cannot start: ventilator settings are incomplete");
+        return false;
+    }
+    return true;
+}
+
+void VentilatorController::setCommandMessage(const QString &message)
+{
+    if (m_lastCommandMessage == message)
+        return;
+    m_lastCommandMessage = message;
+    emit commandMessageChanged();
+}
+
+void VentilatorController::logSettingChange(const QString &parameter, const QVariant &oldValue, const QVariant &newValue)
+{
+    if (!m_database)
+        return;
+    m_database->logEvent(QStringLiteral("Setting"),
+                         QStringLiteral("%1 changed from %2 to %3")
+                             .arg(parameter, oldValue.toString(), newValue.toString()),
+                         QStringLiteral("Applied"));
 }
 
 void VentilatorController::appendSample(QVariantList &buffer, double value)
@@ -313,7 +475,7 @@ void VentilatorController::updateSimulation()
     //   - VTE, Ftotal:     Firmware-computed from flow integration
     //   - RCexp, ExpMinVol: Derived from VTE and Ftotal
     // -----------------------------------------------------------------------
-    if (!m_running || m_frozen)
+    if (!m_running)
         return;
 
     ++m_sampleIndex;
@@ -461,10 +623,12 @@ void VentilatorController::updateSimulation()
         ? qMax(0.0, m_etco2 * std::exp(-normalized * 6.0) - 2.0)
         : m_etco2 * (1.0 - std::exp(-normalized * 8.0)) + std::sin(m_sampleIndex * 0.08);
 
-    appendSample(m_pressureWaveform, paw); // BIND: pressure sensor stream
-    appendSample(m_flowWaveform, flow); // BIND: flow sensor stream
-    appendSample(m_volumeWaveform, volume); // BIND: volume integration stream (mL)
-    appendSample(m_co2Waveform, co2); // BIND: CO2 sensor stream
+    if (!m_frozen) {
+        appendSample(m_pressureWaveform, paw); // BIND: pressure sensor stream
+        appendSample(m_flowWaveform, flow); // BIND: flow sensor stream
+        appendSample(m_volumeWaveform, volume); // BIND: volume integration stream (mL)
+        appendSample(m_co2Waveform, co2); // BIND: CO2 sensor stream
+    }
 
     // ---------------------------------------------------------------
     // Clinical decision support metrics (simulated)
@@ -519,7 +683,8 @@ void VentilatorController::updateSimulation()
     evaluateAlarms();
     saveSnapshotIfDue();
     emit measurementsChanged();
-    emit waveformChanged();
+    if (!m_frozen)
+        emit waveformChanged();
 }
 
 void VentilatorController::evaluateAlarms()

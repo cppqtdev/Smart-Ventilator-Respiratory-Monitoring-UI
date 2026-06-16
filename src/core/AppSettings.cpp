@@ -1,5 +1,16 @@
 #include "AppSettings.h"
 
+#include <QDebug>
+
+namespace {
+void syncSettings(QSettings &settings, const QString &key)
+{
+    settings.sync();
+    if (settings.status() != QSettings::NoError)
+        qWarning() << "Failed to persist setting" << key << "status" << settings.status();
+}
+}
+
 AppSettings::AppSettings(QObject *parent)
     : QObject(parent)
     , m_settings(QStringLiteral("AlsonsTechnology"), QStringLiteral("SmartVentilatorDemo"))
@@ -61,6 +72,7 @@ void AppSettings::setOperatingHours(double hours)
     if (qFuzzyCompare(operatingHours(), hours))
         return;
     m_settings.setValue(QStringLiteral("device/operatingHours"), hours);
+    syncSettings(m_settings, QStringLiteral("device/operatingHours"));
     emit operatingHoursChanged();
 }
 
@@ -69,6 +81,7 @@ void AppSettings::setBrightness(int value)
     if (brightness() == value)
         return;
     m_settings.setValue(QStringLiteral("ui/brightness"), value);
+    syncSettings(m_settings, QStringLiteral("ui/brightness"));
     emit brightnessChanged();
 }
 
@@ -77,6 +90,7 @@ void AppSettings::setAudioVolume(int value)
     if (audioVolume() == value)
         return;
     m_settings.setValue(QStringLiteral("ui/audioVolume"), value);
+    syncSettings(m_settings, QStringLiteral("ui/audioVolume"));
     emit audioVolumeChanged();
 }
 
@@ -85,6 +99,7 @@ void AppSettings::setLanguage(const QString &value)
     if (language() == value)
         return;
     m_settings.setValue(QStringLiteral("ui/language"), value);
+    syncSettings(m_settings, QStringLiteral("ui/language"));
     emit languageChanged();
 }
 
@@ -93,6 +108,7 @@ void AppSettings::setDayNightMode(const QString &value)
     if (dayNightMode() == value)
         return;
     m_settings.setValue(QStringLiteral("ui/dayNightMode"), value);
+    syncSettings(m_settings, QStringLiteral("ui/dayNightMode"));
     emit dayNightModeChanged();
 }
 
@@ -101,6 +117,7 @@ void AppSettings::setTimeZoneId(const QString &value)
     if (timeZoneId() == value)
         return;
     m_settings.setValue(QStringLiteral("ui/timeZoneId"), value);
+    syncSettings(m_settings, QStringLiteral("ui/timeZoneId"));
     emit timeZoneIdChanged();
 }
 
@@ -110,6 +127,7 @@ void AppSettings::setMonitoringLayout(int value)
     if (monitoringLayout() == value)
         return;
     m_settings.setValue(QStringLiteral("ui/monitoringLayout"), value);
+    syncSettings(m_settings, QStringLiteral("ui/monitoringLayout"));
     emit monitoringLayoutChanged();
 }
 
@@ -119,6 +137,7 @@ void AppSettings::setNightStartHour(int value)
     if (nightStartHour() == value)
         return;
     m_settings.setValue(QStringLiteral("ui/nightStartHour"), value);
+    syncSettings(m_settings, QStringLiteral("ui/nightStartHour"));
     emit dayNightScheduleChanged();
 }
 
@@ -128,5 +147,6 @@ void AppSettings::setDayStartHour(int value)
     if (dayStartHour() == value)
         return;
     m_settings.setValue(QStringLiteral("ui/dayStartHour"), value);
+    syncSettings(m_settings, QStringLiteral("ui/dayStartHour"));
     emit dayNightScheduleChanged();
 }

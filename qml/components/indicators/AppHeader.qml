@@ -84,6 +84,11 @@ Control {
             detail: control.alarmData ? control.alarmData.detail : ""
         }
 
+        Item {
+            visible: !control.showAlarm
+            Layout.fillWidth: true
+        }
+
         PrimaryButton {
             Layout.preferredWidth: 60
             Layout.preferredHeight: 40

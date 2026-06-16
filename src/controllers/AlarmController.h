@@ -79,6 +79,12 @@ public:
                               const QString &description,
                               const QString &status);
 
+    /** @brief Raises or updates the current alarm banner and records history. */
+    Q_INVOKABLE void raiseAlarm(const QString &priority,
+                                const QString &source,
+                                const QString &headline,
+                                const QString &detail);
+
     /** @return True when alarm audio should be playing (active and not silenced). */
     bool audioActive() const;
 

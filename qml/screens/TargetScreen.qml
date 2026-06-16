@@ -10,7 +10,6 @@ import QtQuick.Layouts
 import "../styles"
 import "../components/cards"
 import "../components/charts"
-import "../components/buttons"
 
 Control {
     id: root
@@ -78,7 +77,7 @@ Control {
                                 maximumValue: 900
                                 unit: "mL"
                                 onValueChangedByUser: function(v) {
-                                    root.ventilatorData.tidalVolume = v
+                                    root.ventilatorData.requestParameterChange("tidalVolume", v)
                                 }
                             }
                             PressureGroupBox {
@@ -88,7 +87,7 @@ Control {
                                 maximumValue: 60
                                 unit: "1/min"
                                 onValueChangedByUser: function(v) {
-                                    root.ventilatorData.respiratoryRate = v
+                                    root.ventilatorData.requestParameterChange("respiratoryRate", v)
                                 }
                             }
                             PressureGroupBox {
@@ -107,7 +106,7 @@ Control {
                                 maximumValue: 30
                                 unit: "cmH2O"
                                 onValueChangedByUser: function(v) {
-                                    root.ventilatorData.peep = v
+                                    root.ventilatorData.requestParameterChange("peep", v)
                                 }
                             }
                             PressureGroupBox {
@@ -117,7 +116,7 @@ Control {
                                 maximumValue: 40
                                 unit: "cmH2O"
                                 onValueChangedByUser: function(v) {
-                                    root.ventilatorData.pressureSupport = v
+                                    root.ventilatorData.requestParameterChange("pressureSupport", v)
                                 }
                             }
                             PressureGroupBox {
@@ -127,7 +126,7 @@ Control {
                                 maximumValue: 400
                                 unit: "%"
                                 onValueChangedByUser: function(v) {
-                                    root.ventilatorData.minuteVolume = v
+                                    root.ventilatorData.requestParameterChange("minuteVolume", v)
                                 }
                             }
                         }

@@ -25,19 +25,26 @@ QString PatientController::admitDate() const { return m_admitDate; }
 
 int PatientController::ibw() const
 {
-    // CLINICAL: Ideal Body Weight calculation uses Devine formula (1974).
-    // Verify with clinical SME before production deployment.
+    if (m_category == QStringLiteral("Neonatal"))
+        return qBound(1, m_weight, 8);
+    if (m_category == QStringLiteral("Pediatric"))
+        return qBound(3, m_weight, 60);
 
+    // CLINICAL: Adult ideal body weight calculation uses Devine formula (1974).
+    // Verify with clinical SME before production deployment.
     const double base = m_gender == QStringLiteral("Male") ? 50.0 : 45.5;
-    return qRound(base + 0.91 * (m_height - 152.4));
+    return qBound(20, qRound(base + 0.91 * (m_height - 152.4)), 160);
 }
 
 int PatientController::recommendedVt() const
 {
     // CLINICAL: Tidal volume recommendation uses 6 mL/kg IBW (ARDSNet).
     // Adjust range per institutional protocol (6-8 mL/kg typical).
-
-    return qMax(20, ibw() * 6);
+    if (m_category == QStringLiteral("Neonatal"))
+        return qBound(20, m_weight * 6, 60);
+    if (m_category == QStringLiteral("Pediatric"))
+        return qBound(30, ibw() * 7, 450);
+    return qBound(150, ibw() * 6, 900);
 }
 
 int PatientController::recommendedRate() const

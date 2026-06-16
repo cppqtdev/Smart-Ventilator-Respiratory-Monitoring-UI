@@ -3,6 +3,7 @@
 #include <QQmlContext>
 #include <QQuickStyle>
 #include <QByteArray>
+#include <QDebug>
 
 #include "src/core/AppSettings.h"
 #include "src/core/DatabaseManager.h"
@@ -26,10 +27,22 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName(QStringLiteral("SmartVentilatorDemo"));
 
     DatabaseManager databaseManager;
-    databaseManager.initialize();
+    const bool databaseReady = databaseManager.initialize();
+    if (!databaseReady)
+        qCritical() << "Database initialization failed:" << databaseManager.lastError();
     AppSettings appSettings;
     PatientController patientController(&databaseManager);
     AlarmController alarmController(&databaseManager);
+    if (!databaseReady) {
+        alarmController.addAlarm(QStringLiteral("Critical"),
+                                 QStringLiteral("Storage"),
+                                 QStringLiteral("Database unavailable -- audit trail and patient persistence degraded"),
+                                 QStringLiteral("Active"));
+        alarmController.setActive(true);
+        alarmController.setPriority(QStringLiteral("Critical"));
+        alarmController.setHeadline(QStringLiteral("Storage Failure"));
+        alarmController.setDetail(QStringLiteral("Audit trail unavailable"));
+    }
     EventController eventController(&databaseManager);
     UserController userController(&databaseManager);
     VentilatorController ventilatorController(&databaseManager, &alarmController);

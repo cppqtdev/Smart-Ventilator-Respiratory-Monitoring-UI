@@ -177,12 +177,8 @@ Page {
         root.refreshHistories()
         root.logAction("Weaning", message)
         if (status === "Failed" && root.alarmData) {
-            root.alarmData.addAlarm(
-                        "Warning", "Weaning", message, "Active")
-            root.alarmData.setActive(true)
-            root.alarmData.setPriority("Warning")
-            root.alarmData.setHeadline("SBT Stopped")
-            root.alarmData.setDetail(message)
+            root.alarmData.raiseAlarm("Warning", "Weaning",
+                                      "SBT Stopped", message)
         }
     }
 
@@ -208,11 +204,7 @@ Page {
 
     function raisePowerAlarm(priority, headline, detail) {
         if (!root.alarmData) return
-        root.alarmData.addAlarm(priority, "Power", detail, "Active")
-        root.alarmData.setActive(true)
-        root.alarmData.setPriority(priority)
-        root.alarmData.setHeadline(headline)
-        root.alarmData.setDetail(detail)
+        root.alarmData.raiseAlarm(priority, "Power", headline, detail)
     }
 
     function recordManeuver(type, result, unit, notes) {

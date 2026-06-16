@@ -248,6 +248,7 @@ Control {
                                 ]
 
                                 Control {
+                                    id: topMetricDelegate
                                     required property var modelData
                                     width: (parent.width - 3 * 12) / 4
                                     height: parent.height
@@ -265,7 +266,7 @@ Control {
                                         spacing: 8
 
                                         Text {
-                                            text: modelData.lbl
+                                            text: topMetricDelegate.modelData.lbl
                                             color: Colors.textSecondary
                                             font.pixelSize: Typography.caption
                                         }
@@ -275,14 +276,14 @@ Control {
                                         }
 
                                         Text {
-                                            text: modelData.val
+                                            text: topMetricDelegate.modelData.val
                                             color: Colors.textPrimary
                                             font.pixelSize: Typography.body
                                             font.weight: Font.DemiBold
                                         }
 
                                         Text {
-                                            text: modelData.u
+                                            text: topMetricDelegate.modelData.u
                                             color: Colors.textMuted
                                             font.pixelSize: Typography.caption
                                         }
@@ -305,6 +306,7 @@ Control {
                                 ]
 
                                 Control {
+                                    id: bottomMetricDelegate
                                     required property var modelData
                                     width: (parent.width - 3 * 12) / 4
                                     height: parent.height
@@ -322,7 +324,7 @@ Control {
                                         spacing: 8
 
                                         Text {
-                                            text: modelData.lbl
+                                            text: bottomMetricDelegate.modelData.lbl
                                             color: Colors.textSecondary
                                             font.pixelSize: Typography.caption
                                         }
@@ -332,14 +334,14 @@ Control {
                                         }
 
                                         Text {
-                                            text: modelData.val
+                                            text: bottomMetricDelegate.modelData.val
                                             color: Colors.textPrimary
                                             font.pixelSize: Typography.body
                                             font.weight: Font.DemiBold
                                         }
 
                                         Text {
-                                            text: modelData.u
+                                            text: bottomMetricDelegate.modelData.u
                                             color: Colors.textMuted
                                             font.pixelSize: Typography.caption
                                         }
@@ -469,7 +471,7 @@ Control {
                             maximumValue: 30
                             unit: "cmH2O"
                             onValueChangedByUser: function(newValue) {
-                                root.ventilatorData.peep = newValue
+                                root.ventilatorData.requestParameterChange("peep", newValue)
                             }
                         }
                         PressureGroupBox {
@@ -478,7 +480,7 @@ Control {
                             maximumValue: 400
                             unit: "%"
                             onValueChangedByUser: function(newValue) {
-                                root.ventilatorData.minuteVolume = newValue
+                                root.ventilatorData.requestParameterChange("minuteVolume", newValue)
                             }
                         }
 

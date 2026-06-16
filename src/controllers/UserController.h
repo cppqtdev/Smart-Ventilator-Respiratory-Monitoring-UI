@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QObject>
+#include <QDateTime>
+#include <QHash>
 #include <QVariantList>
 #include <QVariantMap>
 
@@ -122,4 +124,6 @@ private:
     QString m_currentUser;
     QString m_currentRole;
     int m_lockTimeoutSeconds = 300;
+    QHash<QString, int> m_failedAttempts;
+    QHash<QString, QDateTime> m_lockedUntilUtc;
 };

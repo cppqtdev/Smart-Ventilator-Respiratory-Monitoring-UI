@@ -15,6 +15,7 @@ AlarmController::AlarmController(DatabaseManager *database, QObject *parent)
             m_silenced = false;
             m_silenceRemaining = 0;
             m_silenceTimer.stop();
+            emit audioChanged();
         }
         emit silenceChanged();
     });
@@ -135,6 +136,7 @@ void AlarmController::addAlarm(const QString &priority,
     // HARDWARE: In production, alarm events should also trigger GPIO outputs
     // for audible/visual alarm indicators (buzzer, LED panel) per IEC 60601-1-8.
 
+    beginResetModel();
     m_rows.prepend({
         QDateTime::currentDateTime().toString(QStringLiteral("hh:mm:ss")),
         priority,
@@ -143,24 +145,41 @@ void AlarmController::addAlarm(const QString &priority,
         status
     });
 
-    // Rebuild filter and notify model of change.
-    beginResetModel();
     rebuildFilteredIndices();
     endResetModel();
+    emit filterChanged();
 
     if (m_database)
         m_database->logAlarm(priority, source, description, status);
+}
+
+void AlarmController::raiseAlarm(const QString &priority,
+                                 const QString &source,
+                                 const QString &headline,
+                                 const QString &detail)
+{
+    const bool changed = !m_active
+        || m_priority != priority
+        || m_headline != headline
+        || m_detail != detail;
+    if (changed)
+        addAlarm(priority, source, detail, QStringLiteral("Active"));
+    setActive(true);
+    setPriority(priority);
+    setHeadline(headline);
+    setDetail(detail);
 }
 
 void AlarmController::acknowledgeActiveAlarm()
 {
     if (!m_active)
         return;
-    addAlarm(m_priority, QStringLiteral("Operator"), m_headline, QStringLiteral("Acknowledged"));
-    setActive(false);
-    setPriority(QStringLiteral("Normal"));
-    setHeadline(QStringLiteral("No Active Alarms"));
-    setDetail(QStringLiteral("System normal"));
+    addAlarm(m_priority,
+             QStringLiteral("Operator"),
+             m_headline + QStringLiteral(" acknowledged; alarm remains active until condition clears"),
+             QStringLiteral("Acknowledged"));
+    setDetail(m_detail + QStringLiteral(" | Acknowledged"));
+    emit audioChanged();
 }
 
 void AlarmController::silenceAlarms(int durationSeconds)

@@ -44,6 +44,7 @@ class VentilatorController : public QObject
     Q_PROPERTY(double drivingPressure READ drivingPressure NOTIFY measurementsChanged)
     Q_PROPERTY(QString ieRatio READ ieRatio NOTIFY measurementsChanged)
     Q_PROPERTY(QString ventilationTime READ ventilationTime NOTIFY measurementsChanged)
+    Q_PROPERTY(QString lastCommandMessage READ lastCommandMessage NOTIFY commandMessageChanged)
 
     // Clinical decision support metrics (simulated)
     Q_PROPERTY(double workOfBreathing READ workOfBreathing NOTIFY measurementsChanged)
@@ -126,6 +127,8 @@ public:
     QString ieRatio() const;
     /** @return Formatted ventilation elapsed time as HH:MM:SS. */
     QString ventilationTime() const;
+    /** @return Last accepted/rejected operator command status. */
+    QString lastCommandMessage() const;
 
     /** @return Simulated work of breathing in J/L. Normal 0.3-0.7. */
     double workOfBreathing() const;
@@ -162,12 +165,27 @@ public:
 
     /** @brief Starts the ventilator simulation loop. */
     Q_INVOKABLE void startVentilation();
+    /** @brief Validates and starts ventilation through the safe command path. */
+    Q_INVOKABLE bool requestStartVentilation();
     /** @brief Stops the ventilator simulation loop. */
     Q_INVOKABLE void stopVentilation();
     /** @brief Toggles waveform freeze on or off. */
     Q_INVOKABLE void toggleFreeze();
     /** @brief Runs a simulated sensor calibration sequence. */
     Q_INVOKABLE void runCalibration();
+    /**
+     * @brief Validated operator command for changing a ventilator parameter.
+     * @param parameter Stable parameter id such as "fio2", "peep", or "tidalVolume".
+     * @param value Requested integer value.
+     * @return True if accepted and applied to the simulator state.
+     */
+    Q_INVOKABLE bool requestParameterChange(const QString &parameter, int value);
+    /** @brief Validated operator command for changing an alarm limit. */
+    Q_INVOKABLE bool requestAlarmLimitChange(const QString &limit, int value);
+    /** @brief Validated operator command for changing ventilation mode. */
+    Q_INVOKABLE bool requestModeChange(const QString &mode);
+    /** @brief Validated operator command for enabling/disabling apnea backup. */
+    Q_INVOKABLE bool requestApneaBackupChange(bool enabled);
 
 public slots:
     /** @param value Ventilation mode identifier to apply. */
@@ -203,6 +221,8 @@ signals:
     void settingsChanged();
     void measurementsChanged();
     void waveformChanged();
+    void commandMessageChanged();
+    void commandRejected(const QString &message);
 
 private slots:
     void updateSimulation();
@@ -212,6 +232,12 @@ private:
     void evaluateAlarms();
     void saveSnapshotIfDue();
     QVariantMap snapshot() const;
+    bool applyParameterChange(const QString &parameter, int value, bool audited);
+    bool applyAlarmLimitChange(const QString &limit, int value, bool audited);
+    bool validateMode(const QString &mode, QString *reason) const;
+    bool validateStart(QString *reason) const;
+    void setCommandMessage(const QString &message);
+    void logSettingChange(const QString &parameter, const QVariant &oldValue, const QVariant &newValue);
 
     DatabaseManager *m_database = nullptr;
     AlarmController *m_alarmController = nullptr;
@@ -219,6 +245,7 @@ private:
     bool m_running = false;
     bool m_frozen = false;
     QString m_mode = QStringLiteral("ASV");
+    QString m_lastCommandMessage;
     int m_fio2 = 60;
     int m_peep = 15;
     int m_pressureSupport = 12;

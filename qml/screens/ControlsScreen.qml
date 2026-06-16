@@ -85,8 +85,8 @@ Control {
         // Right panel: section content
         Panel {
             id: rightPanel
-            width: root.width * 0.78 - Spacing.panelGap
-            height: root.height
+            Layout.fillWidth: true
+            Layout.fillHeight: true
             clip: true
 
             Flickable {
@@ -137,7 +137,7 @@ Control {
                 value: root.ventilatorData.fio2
                 unit: "%"
                 onValueChangedByUser: function(v) {
-                    root.ventilatorData.fio2 = v
+                    root.ventilatorData.requestParameterChange("fio2", v)
                 }
             }
             PressureGroupBox {
@@ -146,7 +146,7 @@ Control {
                 maximumValue: 30
                 unit: "cmH2O"
                 onValueChangedByUser: function(v) {
-                    root.ventilatorData.peep = v
+                    root.ventilatorData.requestParameterChange("peep", v)
                 }
             }
             PressureGroupBox {
@@ -155,7 +155,7 @@ Control {
                 maximumValue: 40
                 unit: "cmH2O"
                 onValueChangedByUser: function(v) {
-                    root.ventilatorData.pressureSupport = v
+                    root.ventilatorData.requestParameterChange("pressureSupport", v)
                 }
             }
             PressureGroupBox {
@@ -164,7 +164,7 @@ Control {
                 maximumValue: 60
                 unit: "1/min"
                 onValueChangedByUser: function(v) {
-                    root.ventilatorData.respiratoryRate = v
+                    root.ventilatorData.requestParameterChange("respiratoryRate", v)
                 }
             }
             PressureGroupBox {
@@ -173,7 +173,7 @@ Control {
                 maximumValue: 10
                 unit: "L/min"
                 onValueChangedByUser: function(v) {
-                    root.ventilatorData.trigger = v
+                    root.ventilatorData.requestParameterChange("trigger", v)
                 }
             }
             PressureGroupBox {
@@ -182,7 +182,7 @@ Control {
                 maximumValue: 900
                 unit: "mL"
                 onValueChangedByUser: function(v) {
-                    root.ventilatorData.tidalVolume = v
+                    root.ventilatorData.requestParameterChange("tidalVolume", v)
                 }
             }
             PressureGroupBox {
@@ -191,7 +191,7 @@ Control {
                 maximumValue: 400
                 unit: "%"
                 onValueChangedByUser: function(v) {
-                    root.ventilatorData.minuteVolume = v
+                    root.ventilatorData.requestParameterChange("minuteVolume", v)
                 }
             }
         }
@@ -337,7 +337,7 @@ Control {
                 value: root.ventilatorData.fio2
                 unit: "%"
                 onValueChangedByUser: function(v) {
-                    root.ventilatorData.fio2 = v
+                    root.ventilatorData.requestParameterChange("fio2", v)
                 }
             }
             PressureGroupBox {
@@ -353,7 +353,7 @@ Control {
                 maximumValue: 30
                 unit: "cmH2O"
                 onValueChangedByUser: function(v) {
-                    root.ventilatorData.peep = v
+                    root.ventilatorData.requestParameterChange("peep", v)
                 }
             }
             PressureGroupBox {
@@ -368,7 +368,7 @@ Control {
                 maximumValue: 400
                 unit: "%"
                 onValueChangedByUser: function(v) {
-                    root.ventilatorData.minuteVolume = v
+                    root.ventilatorData.requestParameterChange("minuteVolume", v)
                 }
             }
         }
@@ -389,7 +389,7 @@ Control {
                 maximumValue: 80
                 unit: "cmH2O"
                 onValueChangedByUser: function(v) {
-                    root.ventilatorData.alarmHighPressure = v
+                    root.ventilatorData.requestAlarmLimitChange("highPressure", v)
                 }
             }
             PressureGroupBox {
@@ -398,7 +398,7 @@ Control {
                 maximumValue: 40
                 unit: "cmH2O"
                 onValueChangedByUser: function(v) {
-                    root.ventilatorData.alarmLowPressure = v
+                    root.ventilatorData.requestAlarmLimitChange("lowPressure", v)
                 }
             }
             PressureGroupBox {
@@ -407,7 +407,7 @@ Control {
                 maximumValue: 60
                 unit: "s"
                 onValueChangedByUser: function(v) {
-                    root.ventilatorData.alarmApneaTime = v
+                    root.ventilatorData.requestAlarmLimitChange("apneaTime", v)
                 }
             }
             PressureGroupBox {
@@ -416,7 +416,7 @@ Control {
                 maximumValue: 900
                 unit: "mL"
                 onValueChangedByUser: function(v) {
-                    root.ventilatorData.alarmLowVt = v
+                    root.ventilatorData.requestAlarmLimitChange("lowVt", v)
                 }
             }
             PressureGroupBox {
@@ -425,7 +425,7 @@ Control {
                 maximumValue: 30
                 unit: "L/min"
                 onValueChangedByUser: function(v) {
-                    root.ventilatorData.alarmHighMv = v
+                    root.ventilatorData.requestAlarmLimitChange("highMv", v)
                 }
             }
             PressureGroupBox {
@@ -434,7 +434,7 @@ Control {
                 maximumValue: 100
                 unit: "%"
                 onValueChangedByUser: function(v) {
-                    root.ventilatorData.alarmLowSpo2 = v
+                    root.ventilatorData.requestAlarmLimitChange("lowSpo2", v)
                 }
             }
         }
@@ -476,8 +476,8 @@ Control {
                     buttonColor: root.ventilatorData.apneaBackupEnabled
                         ? Colors.success : Colors.critical
                     onClicked: {
-                        root.ventilatorData.apneaBackupEnabled =
-                            !root.ventilatorData.apneaBackupEnabled
+                        root.ventilatorData.requestApneaBackupChange(
+                            !root.ventilatorData.apneaBackupEnabled)
                     }
                 }
 
@@ -500,7 +500,7 @@ Control {
                     maximumValue: 60
                     unit: "1/min"
                     onValueChangedByUser: function(v) {
-                        root.ventilatorData.respiratoryRate = v
+                        root.ventilatorData.requestParameterChange("respiratoryRate", v)
                     }
                 }
                 PressureGroupBox {
@@ -509,7 +509,7 @@ Control {
                     maximumValue: 900
                     unit: "mL"
                     onValueChangedByUser: function(v) {
-                        root.ventilatorData.tidalVolume = v
+                        root.ventilatorData.requestParameterChange("tidalVolume", v)
                     }
                 }
                 PressureGroupBox {
@@ -518,7 +518,7 @@ Control {
                     maximumValue: 30
                     unit: "cmH2O"
                     onValueChangedByUser: function(v) {
-                        root.ventilatorData.peep = v
+                        root.ventilatorData.requestParameterChange("peep", v)
                     }
                 }
             }

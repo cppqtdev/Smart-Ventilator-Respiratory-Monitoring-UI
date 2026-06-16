@@ -204,102 +204,91 @@ Item {
                 }
 
                 // Scrollable alarm rows
-                Flickable {
+                ListView {
                     width: parent.width
                     height: parent.height - 52
-                    contentWidth: width
-                    contentHeight: alarmColumn.height
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
+                    spacing: 6
+                    model: root.alarmData
                     ScrollBar.vertical: ScrollBar {
                         policy: ScrollBar.AsNeeded
                     }
 
-                    Column {
-                        id: alarmColumn
+                    Text {
                         width: parent.width
-                        spacing: 6
+                        visible: root.alarmData.alarmCount === 0
+                        topPadding: 60
+                        text: "No alarms recorded"
+                        color: Colors.textMuted
+                        font.pixelSize: Typography.subtitle
+                        horizontalAlignment: Text.AlignHCenter
+                    }
 
-                        // Empty state when no alarms match filter
-                        Text {
-                            width: parent.width
-                            visible: root.alarmData.alarmCount === 0
-                            topPadding: 60
-                            text: "No alarms recorded"
-                            color: Colors.textMuted
-                            font.pixelSize: Typography.subtitle
-                            horizontalAlignment: Text.AlignHCenter
-                        }
+                    delegate: Rectangle {
+                        id: alarmRowDelegate
+                        required property string time
+                        required property string priority
+                        required property string source
+                        required property string description
+                        required property string status
 
-                        Repeater {
-                            model: root.alarmData
+                        width: ListView.view.width
+                        height: 68
+                        radius: Radius.small
+                        color: alarmRowDelegate.priority === "Critical"
+                            ? Colors.criticalBackground
+                            : alarmRowDelegate.priority === "Warning"
+                                ? Colors.warningBackground
+                                : Colors.surfaceRaised
 
-                            Rectangle {
-                                id: alarmRowDelegate
-                                required property string time
-                                required property string priority
-                                required property string source
-                                required property string description
-                                required property string status
+                        Row {
+                            anchors.fill: parent
+                            anchors.leftMargin: 16
+                            anchors.rightMargin: 16
 
-                                width: parent.width
-                                height: 68
-                                radius: Radius.small
-                                color: alarmRowDelegate.priority === "Critical"
-                                    ? Colors.criticalBackground
-                                    : alarmRowDelegate.priority === "Warning"
-                                        ? Colors.warningBackground
-                                        : Colors.surfaceRaised
-
-                                Row {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 16
-                                    anchors.rightMargin: 16
-
-                                    Text {
-                                        width: parent.width / 5
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: alarmRowDelegate.time
-                                        color: Colors.textPrimary
-                                        font.family: Typography.monoFamily
-                                        font.pixelSize: Typography.body
-                                    }
-                                    Text {
-                                        width: parent.width / 5
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: alarmRowDelegate.priority
-                                        color: Colors.textPrimary
-                                        font.pixelSize: Typography.body
-                                        font.weight: Font.DemiBold
-                                    }
-                                    Text {
-                                        width: parent.width / 5
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: alarmRowDelegate.source
-                                        color: Colors.textPrimary
-                                        font.pixelSize: Typography.body
-                                    }
-                                    Text {
-                                        width: parent.width / 5
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: alarmRowDelegate.description
-                                        color: Colors.textPrimary
-                                        font.pixelSize: Typography.body
-                                        elide: Text.ElideRight
-                                    }
-                                    Text {
-                                        width: parent.width / 5
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: alarmRowDelegate.status
-                                        color: alarmRowDelegate.status === "Active"
-                                            ? Colors.critical
-                                            : alarmRowDelegate.status === "Acknowledged"
-                                                ? Colors.warning
-                                                : Colors.successBright
-                                        font.pixelSize: Typography.body
-                                        font.weight: Font.DemiBold
-                                    }
-                                }
+                            Text {
+                                width: parent.width / 5
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: alarmRowDelegate.time
+                                color: Colors.textPrimary
+                                font.family: Typography.monoFamily
+                                font.pixelSize: Typography.body
+                            }
+                            Text {
+                                width: parent.width / 5
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: alarmRowDelegate.priority
+                                color: Colors.textPrimary
+                                font.pixelSize: Typography.body
+                                font.weight: Font.DemiBold
+                            }
+                            Text {
+                                width: parent.width / 5
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: alarmRowDelegate.source
+                                color: Colors.textPrimary
+                                font.pixelSize: Typography.body
+                            }
+                            Text {
+                                width: parent.width / 5
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: alarmRowDelegate.description
+                                color: Colors.textPrimary
+                                font.pixelSize: Typography.body
+                                elide: Text.ElideRight
+                            }
+                            Text {
+                                width: parent.width / 5
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: alarmRowDelegate.status
+                                color: alarmRowDelegate.status === "Active"
+                                    ? Colors.critical
+                                    : alarmRowDelegate.status === "Acknowledged"
+                                        ? Colors.warning
+                                        : Colors.successBright
+                                font.pixelSize: Typography.body
+                                font.weight: Font.DemiBold
                             }
                         }
                     }

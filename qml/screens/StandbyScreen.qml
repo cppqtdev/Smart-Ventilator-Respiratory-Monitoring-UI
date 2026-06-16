@@ -317,7 +317,7 @@ Item {
 
                         PrefsTabButton {
                             width: Math.min(170, parent.width)
-                            text: root.ventilatorData.frozen ? "Freeze" : "Resume"
+                            text: root.ventilatorData.frozen ? "Resume" : "Freeze"
                             onClicked: root.ventilatorData.toggleFreeze()
                         }
 
@@ -325,7 +325,9 @@ Item {
                             labelText: "Oxygen"
                             value: root.ventilatorData.fio2
                             unit: "%"
-                            onValueChangedByUser: function(newValue) { root.ventilatorData.fio2 = newValue }
+                            onValueChangedByUser: function(newValue) {
+                                root.ventilatorData.requestParameterChange("fio2", newValue)
+                            }
                         }
 
                         PressureGroupBox {
@@ -333,7 +335,9 @@ Item {
                             value: root.ventilatorData.peep
                             maximumValue: 30
                             unit: "cmH2O"
-                            onValueChangedByUser: function(newValue) { root.ventilatorData.peep = newValue }
+                            onValueChangedByUser: function(newValue) {
+                                root.ventilatorData.requestParameterChange("peep", newValue)
+                            }
                         }
 
                         PressureGroupBox {
@@ -341,7 +345,9 @@ Item {
                             value: root.ventilatorData.minuteVolume
                             maximumValue: 400
                             unit: "%"
-                            onValueChangedByUser: function(newValue) { root.ventilatorData.minuteVolume = newValue }
+                            onValueChangedByUser: function(newValue) {
+                                root.ventilatorData.requestParameterChange("minuteVolume", newValue)
+                            }
                         }
 
                         Item {

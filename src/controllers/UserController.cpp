@@ -39,6 +39,19 @@ bool UserController::login(const QString &username, const QString &pin)
     if (!m_database)
         return false;
 
+    const QDateTime nowUtc = QDateTime::currentDateTimeUtc();
+    const QDateTime lockedUntil = m_lockedUntilUtc.value(username);
+    if (lockedUntil.isValid() && lockedUntil > nowUtc) {
+        const QString reason = QStringLiteral("Account locked. Try again in %1 seconds")
+            .arg(nowUtc.secsTo(lockedUntil));
+        emit loginFailed(reason);
+        if (m_database)
+            m_database->logEvent(QStringLiteral("Security"),
+                                 QStringLiteral("Locked login attempt for user: ") + username,
+                                 QStringLiteral("Blocked"));
+        return false;
+    }
+
     QSqlQuery query(QSqlDatabase::database(
         QStringLiteral("SmartVentilatorConnection")));
     query.prepare(QStringLiteral(
@@ -47,6 +60,12 @@ bool UserController::login(const QString &username, const QString &pin)
     query.addBindValue(hashPin(pin));
 
     if (!query.exec() || !query.next()) {
+        const int failures = m_failedAttempts.value(username, 0) + 1;
+        m_failedAttempts.insert(username, failures);
+        if (failures >= 5) {
+            m_lockedUntilUtc.insert(username, nowUtc.addSecs(300));
+            m_failedAttempts.insert(username, 0);
+        }
         emit loginFailed(QStringLiteral("Invalid username or PIN"));
         if (m_database)
             m_database->logEvent(QStringLiteral("Security"),
@@ -56,6 +75,8 @@ bool UserController::login(const QString &username, const QString &pin)
 
     m_currentUser = username;
     m_currentRole = query.value(0).toString();
+    m_failedAttempts.remove(username);
+    m_lockedUntilUtc.remove(username);
     emit sessionChanged();
 
     if (m_database)

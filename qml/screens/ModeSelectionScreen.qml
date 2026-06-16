@@ -7,7 +7,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls.Basic
-import QtQuick.Layouts
 
 import "../styles"
 import "../components/cards"
@@ -16,6 +15,7 @@ import "../components/buttons"
 Control {
     id: root
     property var ventilatorData
+    property string pendingMode: ventilatorData ? ventilatorData.mode : "ASV"
     signal modeConfirmed()
 
     padding: 0
@@ -54,8 +54,8 @@ Control {
                     mode: modeDelegate.modelData[0]
                     description: modeDelegate.modelData[1]
                     clinicalUse: modeDelegate.modelData[2]
-                    selected: root.ventilatorData.mode === mode
-                    onClicked: root.ventilatorData.mode = mode
+                    selected: root.pendingMode === mode
+                    onClicked: root.pendingMode = mode
                 }
             }
         }
@@ -64,7 +64,10 @@ Control {
             width: Math.min(360, parent.width * 0.3)
             text: "Confirm Mode & Start"
             buttonColor: Colors.success
-            onClicked: root.modeConfirmed()
+            onClicked: {
+                if (root.ventilatorData.requestModeChange(root.pendingMode))
+                    root.modeConfirmed()
+            }
         }
     }
 }

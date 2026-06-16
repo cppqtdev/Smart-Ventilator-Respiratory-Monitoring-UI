@@ -119,9 +119,11 @@ ApplicationWindow {
         padding: Spacing.screenMargin
         currentScreen: root.currentScreen
         onNavigate: function(screen) {
+            if (screen === "monitoring" && !root.ventilatorModel.running) {
+                if (!root.ventilatorModel.requestStartVentilation())
+                    return
+            }
             root.currentScreen = screen
-            if (screen === "monitoring")
-                root.ventilatorModel.startVentilation()
         }
     }
 
@@ -170,7 +172,7 @@ ApplicationWindow {
         source: "qrc:/qml/assets/audio/alarm_tone.wav"
         loops: MediaPlayer.Infinite
         audioOutput: AudioOutput {
-            volume: root.alarmModel.audioActive ? 0.8 : 0.0
+            volume: root.alarmModel.audioActive ? appSettings.audioVolume / 100.0 : 0.0
         }
     }
 
@@ -218,8 +220,8 @@ ApplicationWindow {
             patientData: patientModel
             ventilatorData: ventilatorModel
             onStartRequested: {
-                root.ventilatorModel.startVentilation()
-                root.currentScreen = "monitoring"
+                if (root.ventilatorModel.requestStartVentilation())
+                    root.currentScreen = "monitoring"
             }
             onSetupRequested: {
                 root.ventilatorModel.runCalibration()
@@ -241,8 +243,8 @@ ApplicationWindow {
         ModeSelectionScreen {
             ventilatorData: ventilatorModel
             onModeConfirmed: {
-                root.ventilatorModel.startVentilation()
-                root.currentScreen = "monitoring"
+                if (root.ventilatorModel.requestStartVentilation())
+                    root.currentScreen = "monitoring"
             }
         }
     }
@@ -329,6 +331,8 @@ ApplicationWindow {
     Component {
         id: layoutScreen
         LayoutScreen {
+            patientData: patientModel
+            ventilatorData: ventilatorModel
             appSettingsData: appSettings
         }
     }
