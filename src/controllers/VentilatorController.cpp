@@ -51,6 +51,30 @@ double VentilatorController::vte() const { return m_vte; }
 double VentilatorController::ftotal() const { return m_ftotal; }
 double VentilatorController::rcexp() const { return m_rcexp; }
 double VentilatorController::expMinVol() const { return m_expMinVol; }
+
+double VentilatorController::drivingPressure() const
+{
+    // Driving pressure = Pplat - PEEP. Target < 15 cmH2O for lung protection.
+    return qMax(0.0, m_pplat - m_peep);
+}
+
+QString VentilatorController::ieRatio() const
+{
+    // I:E ratio derived from inspiratory time and respiratory rate.
+    double totalCycle = 60.0 / qMax(1, m_respiratoryRate);
+    double insp = qMax(0.3, static_cast<double>(m_inspiratoryTime));
+    double exp = totalCycle - insp;
+    if (exp <= 0) return QStringLiteral("1:0");
+    return QStringLiteral("1:%1").arg(exp / insp, 0, 'f', 1);
+}
+
+double VentilatorController::workOfBreathing() const { return m_workOfBreathing; }
+double VentilatorController::stressIndex() const { return m_stressIndex; }
+double VentilatorController::deadSpaceFraction() const { return m_deadSpaceFraction; }
+int VentilatorController::highFio2Minutes() const { return m_highFio2Minutes; }
+bool VentilatorController::patientDisconnected() const { return m_patientDisconnected; }
+bool VentilatorController::circuitOcclusion() const { return m_circuitOcclusion; }
+
 int VentilatorController::ventilationSeconds() const { return m_ventilationSeconds; }
 int VentilatorController::alarmHighPressure() const { return m_alarmHighPressure; }
 int VentilatorController::alarmLowPressure() const { return m_alarmLowPressure; }
@@ -101,6 +125,8 @@ void VentilatorController::stopVentilation()
     m_co2Waveform.clear();
     m_ppeak = m_pplat = m_pmean = m_spo2 = m_etco2 = m_compliance = m_resistance = 0;
     m_vte = m_ftotal = m_rcexp = m_expMinVol = 0;
+    m_workOfBreathing = 0; m_stressIndex = 1.0; m_deadSpaceFraction = 0.3;
+    m_patientDisconnected = false; m_circuitOcclusion = false;
     if (m_database)
         m_database->logEvent(QStringLiteral("Ventilation"), QStringLiteral("Ventilation stopped"), QStringLiteral("Standby"));
     emit runningChanged();
@@ -295,22 +321,124 @@ void VentilatorController::updateSimulation()
     const double rr = clampDouble(m_respiratoryRate, 6, 45);
     m_phase = std::fmod(m_phase + dt * rr / 60.0, 1.0);
 
-    const double inspiratoryFraction = clampDouble(0.28 + m_inspiratoryTime * 0.05, 0.24, 0.46);
+    const double inspiratoryFraction = clampDouble(
+        0.28 + m_inspiratoryTime * 0.05, 0.24, 0.46);
     const bool inspiration = m_phase < inspiratoryFraction;
-    const double normalized = inspiration ? m_phase / inspiratoryFraction : (m_phase - inspiratoryFraction) / (1.0 - inspiratoryFraction);
-    const double effort = std::sin(m_sampleIndex * 0.037) * 0.7 + std::sin(m_sampleIndex * 0.011) * 0.4;
-    const double pressureTarget = m_peep + m_pressureSupport + m_tidalVolume / 55.0;
+    const double normalized = inspiration
+        ? m_phase / inspiratoryFraction
+        : (m_phase - inspiratoryFraction) / (1.0 - inspiratoryFraction);
+    const double effort = std::sin(m_sampleIndex * 0.037) * 0.7
+        + std::sin(m_sampleIndex * 0.011) * 0.4;
+    const double pressureTarget = m_peep + m_pressureSupport
+        + m_tidalVolume / 55.0;
 
-    const double paw = inspiration // REPLACE: read from airway pressure sensor
-        ? m_peep + (pressureTarget - m_peep) * (1.0 - std::exp(-normalized * 6.0)) + effort
-        : m_peep + (pressureTarget - m_peep) * std::exp(-normalized * 9.0) + effort * 0.35;
+    // ---------------------------------------------------------------
+    // Mode-specific waveform generation
+    // Each ventilation mode produces different pressure/flow patterns.
+    // REPLACE: all of this with real sensor data in production.
+    // ---------------------------------------------------------------
+    double paw, flow, volume;
     const double flowPeak = m_tidalVolume / 7.0;
-    const double flow = inspiration // REPLACE: read from flow sensor
-        ? flowPeak * (1.0 - normalized * 0.7) + effort * 3.0
-        : -flowPeak * 0.72 * std::sin(M_PI * normalized) * std::exp(-normalized * 0.35) + effort * 2.0;
-    const double volume = inspiration // REPLACE: read from volume integration
-        ? m_tidalVolume * std::sin(normalized * M_PI / 2.0)
-        : m_tidalVolume * std::exp(-normalized * 4.4);
+
+    if (m_mode == QStringLiteral("VCV")) {
+        // Volume Control: square flow, rising pressure
+        flow = inspiration
+            ? flowPeak + effort * 2.0
+            : -flowPeak * 0.6 * std::exp(-normalized * 3.0) + effort;
+        paw = inspiration
+            ? m_peep + (pressureTarget - m_peep) * normalized + effort
+            : m_peep + effort * 0.3;
+        volume = inspiration
+            ? m_tidalVolume * normalized
+            : m_tidalVolume * (1.0 - normalized);
+
+    } else if (m_mode == QStringLiteral("PCV")) {
+        // Pressure Control: square pressure, decelerating flow
+        paw = inspiration
+            ? pressureTarget + effort
+            : m_peep + effort * 0.3;
+        flow = inspiration
+            ? flowPeak * std::exp(-normalized * 3.0) + effort * 2.0
+            : -flowPeak * 0.5 * std::sin(M_PI * normalized) + effort;
+        volume = inspiration
+            ? m_tidalVolume * (1.0 - std::exp(-normalized * 4.0))
+            : m_tidalVolume * std::exp(-normalized * 3.5);
+
+    } else if (m_mode == QStringLiteral("CPAP")
+               || m_mode == QStringLiteral("PSV")) {
+        // CPAP/PSV: constant pressure, spontaneous patient flow
+        double spontaneous = std::sin(m_phase * M_PI * 2.0);
+        paw = m_peep + m_pressureSupport * 0.5
+            + spontaneous * m_pressureSupport * 0.4 + effort * 0.5;
+        flow = spontaneous * flowPeak * 0.6 + effort * 4.0;
+        volume = (std::sin(m_phase * M_PI * 2.0 - M_PI / 2.0) + 1.0)
+            * m_tidalVolume * 0.3;
+
+    } else if (m_mode == QStringLiteral("SIMV")) {
+        // SIMV: mandatory breaths with spontaneous between
+        bool mandatoryBreath = (m_sampleIndex % 88) < 44;
+        if (mandatoryBreath) {
+            // Mandatory: like PCV
+            paw = inspiration
+                ? pressureTarget + effort
+                : m_peep + effort * 0.3;
+            flow = inspiration
+                ? flowPeak * std::exp(-normalized * 2.5) + effort * 2.0
+                : -flowPeak * 0.55 * std::sin(M_PI * normalized) + effort;
+        } else {
+            // Spontaneous: small pressure-supported breaths
+            double spont = std::sin(m_phase * M_PI * 2.0);
+            paw = m_peep + m_pressureSupport * 0.3
+                + spont * 3.0 + effort * 0.4;
+            flow = spont * flowPeak * 0.35 + effort * 3.0;
+        }
+        volume = inspiration
+            ? m_tidalVolume * 0.7 * std::sin(normalized * M_PI / 2.0)
+            : m_tidalVolume * 0.7 * std::exp(-normalized * 3.0);
+
+    } else if (m_mode == QStringLiteral("BiPAP")) {
+        // BiPAP: two pressure levels, patient-triggered
+        double highP = m_peep + m_pressureSupport;
+        paw = inspiration
+            ? highP + effort * 0.5
+            : m_peep + (highP - m_peep) * 0.15 + effort * 0.3;
+        flow = inspiration
+            ? flowPeak * 0.8 * (1.0 - normalized * 0.5) + effort * 2.5
+            : -flowPeak * 0.6 * std::sin(M_PI * normalized) + effort;
+        volume = inspiration
+            ? m_tidalVolume * 0.85 * std::sin(normalized * M_PI / 2.0)
+            : m_tidalVolume * 0.85 * std::exp(-normalized * 4.0);
+
+    } else if (m_mode == QStringLiteral("PRVC")) {
+        // PRVC: pressure-regulated volume control (adaptive pressure)
+        double adaptedPressure = pressureTarget * 0.9
+            + std::sin(m_sampleIndex * 0.005) * 2.0;
+        paw = inspiration
+            ? m_peep + (adaptedPressure - m_peep)
+                * (1.0 - std::exp(-normalized * 8.0)) + effort
+            : m_peep + effort * 0.25;
+        flow = inspiration
+            ? flowPeak * std::exp(-normalized * 2.0) + effort * 2.0
+            : -flowPeak * 0.65 * std::sin(M_PI * normalized) + effort;
+        volume = inspiration
+            ? m_tidalVolume * (1.0 - std::exp(-normalized * 5.0))
+            : m_tidalVolume * std::exp(-normalized * 4.0);
+
+    } else {
+        // Default (ASV and others): original exponential pattern
+        paw = inspiration
+            ? m_peep + (pressureTarget - m_peep)
+                * (1.0 - std::exp(-normalized * 6.0)) + effort
+            : m_peep + (pressureTarget - m_peep)
+                * std::exp(-normalized * 9.0) + effort * 0.35;
+        flow = inspiration
+            ? flowPeak * (1.0 - normalized * 0.7) + effort * 3.0
+            : -flowPeak * 0.72 * std::sin(M_PI * normalized)
+                * std::exp(-normalized * 0.35) + effort * 2.0;
+        volume = inspiration
+            ? m_tidalVolume * std::sin(normalized * M_PI / 2.0)
+            : m_tidalVolume * std::exp(-normalized * 4.4);
+    }
 
     const double slow = std::sin(m_sampleIndex * 0.021);
     const double fio2Effect = (m_fio2 - 21.0) / 79.0;
@@ -338,6 +466,56 @@ void VentilatorController::updateSimulation()
     appendSample(m_volumeWaveform, volume); // BIND: volume integration stream (mL)
     appendSample(m_co2Waveform, co2); // BIND: CO2 sensor stream
 
+    // ---------------------------------------------------------------
+    // Clinical decision support metrics (simulated)
+    // REPLACE: derive from real sensor data in production
+    // ---------------------------------------------------------------
+
+    // Work of breathing (J/L): area under P-V curve approximation
+    // Normal 0.3-0.7 J/L; elevated in restrictive/obstructive disease
+    m_workOfBreathing = clampDouble(
+        0.45 + (m_resistance - 12.0) * 0.03
+        + (30.0 - m_compliance) * 0.008
+        + std::sin(m_sampleIndex * 0.027) * 0.08,
+        0.15, 2.5);
+    m_workOfBreathing = std::round(m_workOfBreathing * 100.0) / 100.0;
+
+    // Stress index: curvature of pressure-time curve during constant flow
+    // 1.0 = linear (ideal), <1.0 = tidal recruitment, >1.0 = overdistension
+    m_stressIndex = clampDouble(
+        1.0 + (m_ppeak - 30.0) * 0.02
+        + std::sin(m_sampleIndex * 0.019) * 0.05,
+        0.6, 1.8);
+    m_stressIndex = std::round(m_stressIndex * 100.0) / 100.0;
+
+    // Dead space fraction (Vd/Vt): Bohr-Enghoff equation approximation
+    // Normal 0.2-0.35; elevated in PE, ARDS, low cardiac output
+    m_deadSpaceFraction = clampDouble(
+        0.28 + (50.0 - m_etco2) * 0.004
+        + std::sin(m_sampleIndex * 0.015) * 0.02,
+        0.10, 0.80);
+    m_deadSpaceFraction = std::round(m_deadSpaceFraction * 100.0) / 100.0;
+
+    // O2 toxicity timer: count minutes with FiO2 > 60%
+    // Risk of absorption atelectasis and pulmonary O2 toxicity
+    if (m_fio2 > 60) {
+        ++m_highFio2SampleCounter;
+        // ~22 samples per second at 45ms interval, 60s = ~1333 samples
+        if (m_highFio2SampleCounter >= 1333) {
+            m_highFio2SampleCounter = 0;
+            ++m_highFio2Minutes;
+        }
+    } else {
+        m_highFio2SampleCounter = 0;
+    }
+
+    // Patient disconnect simulation: detect from near-zero waveform amplitude
+    // REPLACE: in production, compare measured vs expected flow patterns
+    m_patientDisconnected = (m_ppeak < 3.0 && m_running && m_sampleIndex > 100);
+
+    // Circuit occlusion: abnormally high pressure with near-zero flow
+    m_circuitOcclusion = (m_ppeak > 55.0 && std::abs(flow) < 2.0 && m_running);
+
     evaluateAlarms();
     saveSnapshotIfDue();
     emit measurementsChanged();
@@ -359,6 +537,36 @@ void VentilatorController::evaluateAlarms()
     // Throttle alarm row creation: only add a new row when the alarm state
     // transitions (not every 45ms sample tick).
     const bool wasPreviouslyActive = m_alarmController->active();
+
+    // Patient disconnect: highest priority -- life-threatening
+    if (m_patientDisconnected) {
+        if (!wasPreviouslyActive || m_alarmController->headline() != QStringLiteral("Patient Disconnect")) {
+            m_alarmController->addAlarm(
+                QStringLiteral("Critical"), QStringLiteral("Circuit"),
+                QStringLiteral("No airway pressure detected -- check patient connection"),
+                QStringLiteral("Active"));
+        }
+        m_alarmController->setActive(true);
+        m_alarmController->setPriority(QStringLiteral("Critical"));
+        m_alarmController->setHeadline(QStringLiteral("Patient Disconnect"));
+        m_alarmController->setDetail(QStringLiteral("Check circuit and patient"));
+        return;
+    }
+
+    // Circuit occlusion: high pressure with no flow
+    if (m_circuitOcclusion) {
+        if (!wasPreviouslyActive || m_alarmController->headline() != QStringLiteral("Circuit Occlusion")) {
+            m_alarmController->addAlarm(
+                QStringLiteral("Critical"), QStringLiteral("Circuit"),
+                QStringLiteral("High pressure with no flow -- check for obstruction"),
+                QStringLiteral("Active"));
+        }
+        m_alarmController->setActive(true);
+        m_alarmController->setPriority(QStringLiteral("Critical"));
+        m_alarmController->setHeadline(QStringLiteral("Circuit Occlusion"));
+        m_alarmController->setDetail(QStringLiteral("Check tubing and filters"));
+        return;
+    }
 
     if (m_ppeak > m_alarmHighPressure) {
         if (!wasPreviouslyActive || m_alarmController->headline() != QStringLiteral("High Pressure")) {
@@ -413,6 +621,38 @@ void VentilatorController::evaluateAlarms()
         m_alarmController->setPriority(QStringLiteral("Warning"));
         m_alarmController->setHeadline(QStringLiteral("High EtCO2"));
         m_alarmController->setDetail(QStringLiteral("End-tidal CO2 elevated"));
+        return;
+    }
+
+    // O2 toxicity warning: prolonged high FiO2 exposure
+    if (m_highFio2Minutes > 120 && m_fio2 > 60) {
+        if (!wasPreviouslyActive || m_alarmController->headline() != QStringLiteral("O2 Toxicity Risk")) {
+            m_alarmController->addAlarm(
+                QStringLiteral("Warning"), QStringLiteral("Oxygen"),
+                QStringLiteral("FiO2 >60% for ") + QString::number(m_highFio2Minutes)
+                    + QStringLiteral(" min -- consider weaning"),
+                QStringLiteral("Active"));
+        }
+        m_alarmController->setActive(true);
+        m_alarmController->setPriority(QStringLiteral("Warning"));
+        m_alarmController->setHeadline(QStringLiteral("O2 Toxicity Risk"));
+        m_alarmController->setDetail(QStringLiteral("Prolonged high FiO2 exposure"));
+        return;
+    }
+
+    // High driving pressure warning (lung protection)
+    if (drivingPressure() > 15.0) {
+        if (!wasPreviouslyActive || m_alarmController->headline() != QStringLiteral("High Driving Pressure")) {
+            m_alarmController->addAlarm(
+                QStringLiteral("Warning"), QStringLiteral("Pressure"),
+                QStringLiteral("Driving pressure ") + QString::number(qRound(drivingPressure()))
+                    + QStringLiteral(" cmH2O -- target <15"),
+                QStringLiteral("Active"));
+        }
+        m_alarmController->setActive(true);
+        m_alarmController->setPriority(QStringLiteral("Warning"));
+        m_alarmController->setHeadline(QStringLiteral("High Driving Pressure"));
+        m_alarmController->setDetail(QStringLiteral("Lung injury risk -- reduce Vt or increase PEEP"));
         return;
     }
 

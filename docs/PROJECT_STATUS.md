@@ -277,3 +277,19 @@ compliance status is assessed below.
 | 2026-06-14 | --     | Made layout selection persistent and functional in MonitoringScreen |
 | 2026-06-14 | --     | Bottom panels always visible regardless of layout preset      |
 | 2026-06-14 | --     | Added HARDWARE/BIND/REPLACE integration comments throughout   |
+| 2026-06-15 | --     | Fixed AlarmController bounds check on filtered indices        |
+| 2026-06-15 | --     | Added driving pressure (Pplat-PEEP) to VentilatorController  |
+| 2026-06-15 | --     | Added I:E ratio calculation to VentilatorController           |
+| 2026-06-15 | --     | Added I:E and driving pressure to MonitoringScreen param grid |
+| 2026-06-15 | --     | Fixed ScreenLockOverlay to block all mouse events             |
+| 2026-06-15 | --     | Added logout-to-login navigation via UserController signal    |
+| 2026-06-15 | --     | Added EMG and OFF buttons in AppHeader for emergency/shutdown |
+| 2026-06-15 | --     | Fixed BottomNavigation active tab highlighting                |
+| 2026-06-15 | --     | Fixed ClinicalScreen timer if-blocks missing braces           |
+| 2026-06-15 | --     | Fixed battery recharge on AC power restore                    |
+| 2026-06-15 | --     | Fixed AppHeader to show partial patient info                  |
+| 2026-06-15 | --     | Added auto-dismiss timer for ClinicalScreen status messages   |
+| 2026-06-15 | --     | Fixed SettingsScreen messages persist across tabs             |
+| 2026-06-15 | --     | Created StyledTextField, StyledSpinBox, StyledSlider components|
+| 2026-06-15 | --     | Replaced all raw TextField/SpinBox/Slider with styled versions|
+| 2026-06-15 | --     | Full project rescan: 1 bug fixed, 2 new metrics added        |

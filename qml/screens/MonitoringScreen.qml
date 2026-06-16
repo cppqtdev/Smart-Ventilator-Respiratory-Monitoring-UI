@@ -26,8 +26,45 @@ Control {
     // 4 = Quad (Paw + Flow + Volume + CO2)
     // 5 = Full (all waveforms + lung + params)
 
+    // Patient disconnect / circuit occlusion banner
+    Rectangle {
+        id: disconnectBanner
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: root.ventilatorData
+            && (root.ventilatorData.patientDisconnected
+                || root.ventilatorData.circuitOcclusion) ? 48 : 0
+        visible: height > 0
+        color: Colors.critical
+        z: 10
+
+        SequentialAnimation on opacity {
+            running: disconnectBanner.visible
+            loops: Animation.Infinite
+            NumberAnimation { to: 0.3; duration: 300 }
+            NumberAnimation { to: 1.0; duration: 300 }
+        }
+
+        Text {
+            anchors.centerIn: parent
+            text: root.ventilatorData
+                && root.ventilatorData.patientDisconnected
+                ? "PATIENT DISCONNECT -- Check circuit and patient connection"
+                : "CIRCUIT OCCLUSION -- Check tubing and filters for obstruction"
+            color: Colors.textPrimary
+            font.pixelSize: Typography.body
+            font.weight: Font.DemiBold
+        }
+
+        Behavior on height {
+            NumberAnimation { duration: 200 }
+        }
+    }
+
     RowLayout {
         anchors.fill: parent
+        anchors.topMargin: disconnectBanner.height
         // HARDWARE: All metric values and waveforms in this screen are bound
         // to VentilatorController properties. To integrate real sensors,
         // replace the simulation in VentilatorController.updateSimulation()
@@ -205,14 +242,71 @@ Control {
                             Repeater {
                                 model: [
                                     { lbl: "Pconf", val: root.ventilatorData.pressureSupport, u: "cmH2O" },
-                                    { lbl: "Rate", val: root.ventilatorData.respiratoryRate, u: "1/min" },
-                                    { lbl: "PetCO2", val: root.ventilatorData.etco2, u: "mmHg" },
-                                    { lbl: "Cstat", val: root.ventilatorData.compliance, u: "mL/cmH2O" }
+                                    { lbl: "I:E", val: root.ventilatorData.ieRatio, u: "" },
+                                    { lbl: "Pdriv", val: Math.round(root.ventilatorData.drivingPressure), u: "cmH2O" },
+                                    { lbl: "Rate", val: root.ventilatorData.respiratoryRate, u: "1/min" }
                                 ]
 
                                 Control {
                                     required property var modelData
-                                    width: (parent.width - 36) / 4
+                                    width: (parent.width - 3 * 12) / 4
+                                    height: parent.height
+                                    leftPadding: 18
+                                    rightPadding: 18
+
+                                    background: Rectangle {
+                                        radius: Radius.medium
+                                        color: "#00000000"
+                                        border.color: Colors.line
+                                        border.width: 1
+                                    }
+
+                                    contentItem: RowLayout {
+                                        spacing: 8
+
+                                        Text {
+                                            text: modelData.lbl
+                                            color: Colors.textSecondary
+                                            font.pixelSize: Typography.caption
+                                        }
+
+                                        Item {
+                                            Layout.fillWidth: true
+                                        }
+
+                                        Text {
+                                            text: modelData.val
+                                            color: Colors.textPrimary
+                                            font.pixelSize: Typography.body
+                                            font.weight: Font.DemiBold
+                                        }
+
+                                        Text {
+                                            text: modelData.u
+                                            color: Colors.textMuted
+                                            font.pixelSize: Typography.caption
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Row {
+                            width: parent.width
+                            height: 56
+                            spacing: 12
+
+                            Repeater {
+                                model: [
+                                    { lbl: "PetCO2", val: root.ventilatorData.etco2, u: "mmHg" },
+                                    { lbl: "Cstat", val: root.ventilatorData.compliance, u: "mL/cmH2O" },
+                                    { lbl: "WOB", val: root.ventilatorData.workOfBreathing, u: "J/L" },
+                                    { lbl: "Vd/Vt", val: root.ventilatorData.deadSpaceFraction, u: "" }
+                                ]
+
+                                Control {
+                                    required property var modelData
+                                    width: (parent.width - 3 * 12) / 4
                                     height: parent.height
                                     leftPadding: 18
                                     rightPadding: 18

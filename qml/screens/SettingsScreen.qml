@@ -38,7 +38,11 @@ Page {
 
     padding: 0
 
-    function selectTab(tab) { root.currentTab = tab }
+    function selectTab(tab) {
+        root.currentTab = tab
+        root.formMessage = ""
+        root.pwdMessage = ""
+    }
 
     function clearForm() {
         root.formUsername = ""

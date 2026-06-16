@@ -96,6 +96,7 @@ TabBar {
 
     component NavTabButton: PrefsTabButton {
         property string screen: ""
+        checked: root.currentScreen === screen
         font.pixelSize: Typography.small
         font.weight: Font.Bold
     }

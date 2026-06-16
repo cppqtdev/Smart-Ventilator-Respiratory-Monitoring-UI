@@ -96,6 +96,8 @@ ApplicationWindow {
         patientCategory: patientModel.category
         patientData: patientModel
         automationStatus: root.clinicalAutomationStatus
+        onEmergencyRequested: root.currentScreen = "emergency"
+        onShutdownRequested: root.currentScreen = "shutdown"
     }
 
     Control {
@@ -140,6 +142,17 @@ ApplicationWindow {
         }
         function onDayNightScheduleChanged() {
             root.updateColorMode()
+        }
+    }
+
+    // Navigate to login screen when user logs out from any screen.
+    Connections {
+        target: userController
+        function onSessionChanged() {
+            if (!userController.loggedIn) {
+                root.operatorRole = ""
+                root.currentScreen = "login"
+            }
         }
     }
 

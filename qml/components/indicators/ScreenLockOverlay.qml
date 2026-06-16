@@ -42,12 +42,18 @@ Rectangle {
         }
     }
 
-    // Capture all mouse events when locked.
+    // Block all interaction when locked. acceptedButtons: All ensures
+    // nothing passes through. No propagateComposedEvents.
     MouseArea {
         anchors.fill: parent
         enabled: root.locked
-        onClicked: {}
-        onPressed: {}
+        acceptedButtons: Qt.AllButtons
+        hoverEnabled: true
+        preventStealing: true
+        onClicked: function(mouse) { mouse.accepted = true }
+        onPressed: function(mouse) { mouse.accepted = true }
+        onReleased: function(mouse) { mouse.accepted = true }
+        onWheel: function(wheel) { wheel.accepted = true }
     }
 
     Column {

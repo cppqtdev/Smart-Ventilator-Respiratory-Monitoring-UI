@@ -33,10 +33,15 @@ int AlarmController::rowCount(const QModelIndex &parent) const
 
 QVariant AlarmController::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid() || index.row() < 0 || index.row() >= m_filteredIndices.size())
+    if (!index.isValid() || index.row() < 0
+        || index.row() >= m_filteredIndices.size())
         return {};
 
-    const AlarmRow &row = m_rows.at(m_filteredIndices.at(index.row()));
+    const int sourceRow = m_filteredIndices.at(index.row());
+    if (sourceRow < 0 || sourceRow >= m_rows.size())
+        return {};
+
+    const AlarmRow &row = m_rows.at(sourceRow);
     switch (role) {
     case TimeRole: return row.time;
     case PriorityRole: return row.priority;

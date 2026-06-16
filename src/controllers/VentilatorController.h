@@ -41,7 +41,18 @@ class VentilatorController : public QObject
     Q_PROPERTY(double ftotal READ ftotal NOTIFY measurementsChanged)
     Q_PROPERTY(double rcexp READ rcexp NOTIFY measurementsChanged)
     Q_PROPERTY(double expMinVol READ expMinVol NOTIFY measurementsChanged)
+    Q_PROPERTY(double drivingPressure READ drivingPressure NOTIFY measurementsChanged)
+    Q_PROPERTY(QString ieRatio READ ieRatio NOTIFY measurementsChanged)
     Q_PROPERTY(QString ventilationTime READ ventilationTime NOTIFY measurementsChanged)
+
+    // Clinical decision support metrics (simulated)
+    Q_PROPERTY(double workOfBreathing READ workOfBreathing NOTIFY measurementsChanged)
+    Q_PROPERTY(double stressIndex READ stressIndex NOTIFY measurementsChanged)
+    Q_PROPERTY(double deadSpaceFraction READ deadSpaceFraction NOTIFY measurementsChanged)
+    Q_PROPERTY(int highFio2Minutes READ highFio2Minutes NOTIFY measurementsChanged)
+    Q_PROPERTY(bool patientDisconnected READ patientDisconnected NOTIFY measurementsChanged)
+    Q_PROPERTY(bool circuitOcclusion READ circuitOcclusion NOTIFY measurementsChanged)
+
     Q_PROPERTY(int alarmHighPressure READ alarmHighPressure WRITE setAlarmHighPressure NOTIFY settingsChanged)
     Q_PROPERTY(int alarmLowPressure READ alarmLowPressure WRITE setAlarmLowPressure NOTIFY settingsChanged)
     Q_PROPERTY(int alarmApneaTime READ alarmApneaTime WRITE setAlarmApneaTime NOTIFY settingsChanged)
@@ -109,8 +120,26 @@ public:
     double rcexp() const;
     /** @return Measured expired minute volume in L/min. */
     double expMinVol() const;
+    /** @return Driving pressure in cmH2O (Pplat - PEEP). Key lung protection metric. */
+    double drivingPressure() const;
+    /** @return Inspiratory:Expiratory ratio as formatted string (e.g. "1:2.0"). */
+    QString ieRatio() const;
     /** @return Formatted ventilation elapsed time as HH:MM:SS. */
     QString ventilationTime() const;
+
+    /** @return Simulated work of breathing in J/L. Normal 0.3-0.7. */
+    double workOfBreathing() const;
+    /** @return Stress index (1.0 = linear, <1 = recruitment, >1 = overdistension). */
+    double stressIndex() const;
+    /** @return Dead space fraction (Vd/Vt). Normal 0.2-0.35. */
+    double deadSpaceFraction() const;
+    /** @return Minutes spent with FiO2 above 60%. O2 toxicity risk. */
+    int highFio2Minutes() const;
+    /** @return True if waveforms suggest patient circuit disconnection. */
+    bool patientDisconnected() const;
+    /** @return True if pressure pattern suggests circuit occlusion. */
+    bool circuitOcclusion() const;
+
     /** @return Ventilation elapsed time in seconds. */
     int ventilationSeconds() const;
 
@@ -209,6 +238,13 @@ private:
     double m_ftotal = 0;
     double m_rcexp = 0;
     double m_expMinVol = 0;
+    double m_workOfBreathing = 0;
+    double m_stressIndex = 1.0;
+    double m_deadSpaceFraction = 0.3;
+    int m_highFio2Minutes = 0;
+    bool m_patientDisconnected = false;
+    bool m_circuitOcclusion = false;
+    int m_highFio2SampleCounter = 0;
     int m_alarmHighPressure = 40;
     int m_alarmLowPressure = 5;
     int m_alarmApneaTime = 20;

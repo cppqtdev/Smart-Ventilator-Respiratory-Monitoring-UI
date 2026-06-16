@@ -25,6 +25,20 @@ Page {
     property int currentTab: 0
     property string actionMessage: ""
 
+    onCurrentTabChanged: root.actionMessage = ""
+
+    // Auto-dismiss status message after 5 seconds
+    Timer {
+        id: messageDismissTimer
+        interval: 5000
+        onTriggered: root.actionMessage = ""
+    }
+
+    onActionMessageChanged: {
+        if (root.actionMessage.length > 0)
+            messageDismissTimer.restart()
+    }
+
     // Therapy state
     property bool humidifierEnabled: true
     property int humidifierTemperature: 37
@@ -225,9 +239,10 @@ Page {
         repeat: true
         onTriggered: {
             root.sbtMinutes += 1
-            if (root.sbtMinutes >= 30)
-            root.finishSbt("Completed",
-                           "SBT completed after 30 minutes")
+            if (root.sbtMinutes >= 30) {
+                root.finishSbt("Completed",
+                    "SBT completed after 30 minutes")
+            }
         }
     }
 
@@ -240,8 +255,9 @@ Page {
             - root.humidifierActualTemperature
             root.humidifierActualTemperature
             += Math.max(-0.4, Math.min(0.4, d))
-            if (root.nebulizerRunning && root.humidifierWaterLevel > 0)
-            root.humidifierWaterLevel -= 1
+            if (root.nebulizerRunning && root.humidifierWaterLevel > 0) {
+                root.humidifierWaterLevel -= 1
+            }
             if (root.humidifierWaterLevel <= 15
                 && !root.humidifierWarningRaised) {
                 root.humidifierWarningRaised = true
@@ -257,10 +273,11 @@ Page {
         repeat: true
         onTriggered: {
             if (root.ventilatorData.spo2 > 0
-                && root.ventilatorData.spo2 < 88)
-            root.finishSbt("Failed", "SpO2 below 88%")
-            else if (root.rsbi > 120)
-            root.finishSbt("Failed", "RSBI above 120")
+                    && root.ventilatorData.spo2 < 88) {
+                root.finishSbt("Failed", "SpO2 below 88%")
+            } else if (root.rsbi > 120) {
+                root.finishSbt("Failed", "RSBI above 120")
+            }
         }
     }
 
@@ -667,6 +684,47 @@ Page {
                                 label: "FiO2"
                                 value: root.ventilatorData ? root.ventilatorData.fio2 : 0
                                 unit: "%"
+                            }
+
+                            MetricTile {
+                                Layout.fillWidth: true
+                                height: 110
+                                label: "WOB"
+                                value: root.ventilatorData ? root.ventilatorData.workOfBreathing : 0
+                                unit: "J/L"
+                            }
+
+                            MetricTile {
+                                Layout.fillWidth: true
+                                height: 110
+                                label: "Stress Idx"
+                                value: root.ventilatorData ? root.ventilatorData.stressIndex : 0
+                                unit: ""
+                                state: root.ventilatorData
+                                    && root.ventilatorData.stressIndex > 1.3
+                                    ? "warning" : "normal"
+                            }
+
+                            MetricTile {
+                                Layout.fillWidth: true
+                                height: 110
+                                label: "Vd/Vt"
+                                value: root.ventilatorData ? root.ventilatorData.deadSpaceFraction : 0
+                                unit: ""
+                                state: root.ventilatorData
+                                    && root.ventilatorData.deadSpaceFraction > 0.5
+                                    ? "warning" : "normal"
+                            }
+
+                            MetricTile {
+                                Layout.fillWidth: true
+                                height: 110
+                                label: "O2 Timer"
+                                value: root.ventilatorData ? root.ventilatorData.highFio2Minutes : 0
+                                unit: "min"
+                                state: root.ventilatorData
+                                    && root.ventilatorData.highFio2Minutes > 120
+                                    ? "warning" : "normal"
                             }
                         }
 
@@ -1185,8 +1243,12 @@ Page {
                                         onClicked: {
                                             root.acPower = !root.acPower
                                             root.saveState("acPower", root.acPower)
-                                            if (root.acPower && root.appSettingsData)
-                                            root.appSettingsData.dayNightMode = "Automatic"
+                                            if (root.acPower) {
+                                                root.batteryLevel = 100
+                                                root.saveState("batteryLevel", 100)
+                                                if (root.appSettingsData)
+                                                    root.appSettingsData.dayNightMode = "Automatic"
+                                            }
                                             root.evaluateBattery()
                                         }
                                     }

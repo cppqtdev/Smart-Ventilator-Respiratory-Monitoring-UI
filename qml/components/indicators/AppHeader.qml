@@ -8,9 +8,12 @@ import QtQuick.Layouts
 import QtQuick.Controls.Basic
 
 import "../cards"
+import "../buttons"
 import "../../styles"
 
 Control {
+    id: control
+
     property var alarmData
     property var clockData
     property bool showAlarm: false
@@ -19,7 +22,8 @@ Control {
     property var patientData
     property string automationStatus: ""
 
-    id: control
+    signal emergencyRequested()
+    signal shutdownRequested()
     topPadding: Spacing.screenMargin_10
     padding: Spacing.screenMargin
 
@@ -33,12 +37,21 @@ Control {
         }
 
         Text {
-            visible: control.patientData !== undefined && control.patientData !== null
-            text: control.patientData
-                ? control.patientData.patientId + "  |  "
-                  + control.patientData.bedNumber + "  |  "
-                  + control.patientData.physician
-                : ""
+            text: {
+                if (!control.patientData) return ""
+                var parts = []
+                if (control.patientData.patientId)
+                    parts.push(control.patientData.patientId)
+                if (control.patientData.bedNumber)
+                    parts.push(control.patientData.bedNumber)
+                if (control.patientData.physician)
+                    parts.push(control.patientData.physician)
+                return parts.join("  |  ")
+            }
+            visible: control.patientData
+                && (control.patientData.patientId
+                    || control.patientData.bedNumber
+                    || control.patientData.physician)
             color: Colors.textSecondary
             font.pixelSize: Typography.caption
             font.family: Typography.monoFamily
@@ -69,6 +82,24 @@ Control {
             visible: control.showAlarm
             headline: control.alarmData ? control.alarmData.headline : ""
             detail: control.alarmData ? control.alarmData.detail : ""
+        }
+
+        PrimaryButton {
+            Layout.preferredWidth: 60
+            Layout.preferredHeight: 40
+            text: "EMG"
+            buttonColor: Colors.critical
+            font.pixelSize: Typography.caption
+            onClicked: control.emergencyRequested()
+        }
+
+        PrimaryButton {
+            Layout.preferredWidth: 60
+            Layout.preferredHeight: 40
+            text: "OFF"
+            buttonColor: Colors.buttonMuted
+            font.pixelSize: Typography.caption
+            onClicked: control.shutdownRequested()
         }
 
         DateTimeBanner {
