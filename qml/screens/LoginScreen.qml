@@ -11,13 +11,15 @@ import "../styles"
 import "../components/cards"
 import "../components/buttons"
 
+pragma ComponentBehavior: Bound
+
 Control {
     id: root
 
     signal loginAccepted(string role)
 
     property var userControllerData
-    property string enteredUsername: "admin"
+    property string enteredUsername: ""
     property string enteredPin: ""
     property string errorMessage: ""
 
@@ -25,8 +27,12 @@ Control {
     // per IEC 62443 (industrial cybersecurity).
 
     function attemptLogin() {
-        if (root.enteredPin.length < 4) {
-            root.errorMessage = "PIN must be 4 digits"
+        if (root.enteredUsername.trim().length < 3) {
+            root.errorMessage = "Enter operator username"
+            return
+        }
+        if (root.enteredPin.length < 6) {
+            root.errorMessage = "PIN must be at least 6 digits"
             return
         }
         if (!root.userControllerData) {
@@ -34,7 +40,7 @@ Control {
             return
         }
         if (root.userControllerData.login(
-                root.enteredUsername, root.enteredPin)) {
+                root.enteredUsername.trim(), root.enteredPin)) {
             root.errorMessage = ""
             root.enteredPin = ""
             root.loginAccepted(root.userControllerData.currentRole)
@@ -45,7 +51,7 @@ Control {
     }
 
     function appendDigit(digit) {
-        if (root.enteredPin.length < 4) {
+        if (root.enteredPin.length < 12) {
             root.enteredPin += digit
             root.errorMessage = ""
         }
@@ -67,25 +73,24 @@ Control {
                 horizontalAlignment: Text.AlignHCenter
             }
 
-            // Quick user selection buttons
-            RowLayout {
+            TextField {
                 Layout.fillWidth: true
-                spacing: 12
-
-                Repeater {
-                    model: ["admin", "doctor", "nurse", "service"]
-                    PrefsTabButton {
-                        id: quickBtn
-                        required property string modelData
-                        Layout.fillWidth: true
-                        text: quickBtn.modelData
-                        checked: root.enteredUsername === quickBtn.modelData
-                        onClicked: {
-                            root.enteredUsername = quickBtn.modelData
-                            root.enteredPin = ""
-                            root.errorMessage = ""
-                        }
-                    }
+                Layout.preferredHeight: 64
+                text: root.enteredUsername
+                placeholderText: "Operator username"
+                color: Colors.textPrimary
+                placeholderTextColor: Colors.textMuted
+                font.pixelSize: Typography.body
+                horizontalAlignment: Text.AlignHCenter
+                background: Rectangle {
+                    radius: Radius.small
+                    color: Colors.surface
+                    border.color: Colors.border
+                    border.width: 1
+                }
+                onTextChanged: {
+                    root.enteredUsername = text
+                    root.errorMessage = ""
                 }
             }
 
@@ -100,7 +105,7 @@ Control {
                         var dots = ""
                         for (var i = 0; i < root.enteredPin.length; i++)
                             dots += "\u25CF  "
-                        for (var j = root.enteredPin.length; j < 4; j++)
+                        for (var j = root.enteredPin.length; j < 6; j++)
                             dots += "\u25CB  "
                         return dots.trim()
                     }
@@ -156,10 +161,9 @@ Control {
                 }
             }
 
-            // Demo hint
             Text {
                 Layout.fillWidth: true
-                text: "Default PINs -- admin: 0000 | doctor: 1234 | nurse: 5678 | service: 9999"
+                text: "Use the provisioned operator account for this device"
                 color: Colors.textMuted
                 font.pixelSize: Typography.caption
                 horizontalAlignment: Text.AlignHCenter

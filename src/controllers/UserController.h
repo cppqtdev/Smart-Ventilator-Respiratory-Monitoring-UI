@@ -12,14 +12,14 @@ class DatabaseManager;
  * @brief Manages user accounts, authentication, and role-based access control.
  *
  * UserController provides CRUD operations for user accounts stored in SQLite.
- * Passwords are stored as SHA-256 hashes. Roles control screen access:
+ * Passwords are stored as salted iterative SHA-256 PIN hashes. Roles control screen access:
  *   - "Admin"    : Full access, can manage all users
  *   - "Doctor"   : Clinical access, can modify ventilator settings
  *   - "Nurse"    : Monitoring access, can acknowledge alarms
  *   - "Service"  : Technical access, system diagnostics and calibration
  *
- * PRODUCTION: Replace SHA-256 with bcrypt/scrypt for password hashing.
- * Add account lockout after repeated failed login attempts per IEC 62443.
+ * PRODUCTION: Prefer a certified password KDF such as Argon2id/scrypt from a
+ * validated crypto module when the final platform policy allows it.
  */
 class UserController : public QObject
 {
@@ -116,9 +116,14 @@ signals:
     void userListChanged();
 
 private:
-    static QString hashPin(const QString &pin);
+    static QString createSalt();
+    static QString hashPin(const QString &pin, const QString &salt);
+    static bool pinFormatValid(const QString &pin);
+    static bool roleValid(const QString &role);
     static int roleLevel(const QString &role);
-    void createDefaultUsers();
+    void provisionInitialAdminFromEnvironment();
+    void persistFailedLogin(const QString &username, int failures, const QDateTime &lockedUntilUtc);
+    void clearFailedLogin(const QString &username);
 
     DatabaseManager *m_database = nullptr;
     QString m_currentUser;

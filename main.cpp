@@ -48,6 +48,38 @@ int main(int argc, char *argv[])
     VentilatorController ventilatorController(&databaseManager, &alarmController);
     ClockController clockController;
 
+    auto updateVentilatorPatientContext = [&]() {
+        ventilatorController.setPatientContext(patientController.category());
+        ventilatorController.setPatientIbwKg(patientController.ibw());
+    };
+    updateVentilatorPatientContext();
+    QObject::connect(&patientController, &PatientController::patientChanged,
+                     &ventilatorController, updateVentilatorPatientContext);
+
+    QObject::connect(&userController, &UserController::sessionChanged,
+                     &ventilatorController, [&]() {
+        ventilatorController.setOperatorId(userController.loggedIn()
+            ? userController.currentUser()
+            : QStringLiteral("unauthenticated"));
+    });
+
+    QObject::connect(&databaseManager, &DatabaseManager::errorOccurred,
+                     &alarmController, [&](const QString &message) {
+        alarmController.raiseAlarm(QStringLiteral("Critical"),
+                                   QStringLiteral("Storage"),
+                                   QStringLiteral("Storage Failure"),
+                                   message);
+    });
+    QObject::connect(&ventilatorController, &VentilatorController::backendStateChanged,
+                     &alarmController, [&]() {
+        if (ventilatorController.degradedMode()) {
+            alarmController.raiseAlarm(QStringLiteral("Critical"),
+                                       QStringLiteral("Backend"),
+                                       QStringLiteral("Backend Disconnected"),
+                                       ventilatorController.backendState());
+        }
+    });
+
     // Restore persisted timezone from QSettings.
     clockController.setTimeZoneId(appSettings.timeZoneId());
 

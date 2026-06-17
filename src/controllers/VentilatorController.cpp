@@ -28,6 +28,12 @@ VentilatorController::VentilatorController(DatabaseManager *database,
         ++m_ventilationSeconds;
         emit measurementsChanged();
     });
+
+    m_lastHardwareHeartbeatUtc = QDateTime::currentDateTimeUtc();
+    m_backendWatchdogTimer.setInterval(1000);
+    connect(&m_backendWatchdogTimer, &QTimer::timeout,
+            this, &VentilatorController::checkBackendHeartbeat);
+    m_backendWatchdogTimer.start();
 }
 
 bool VentilatorController::running() const { return m_running; }
@@ -96,6 +102,12 @@ QString VentilatorController::ventilationTime() const
         .arg(s, 2, 10, QLatin1Char('0'));
 }
 QString VentilatorController::lastCommandMessage() const { return m_lastCommandMessage; }
+QString VentilatorController::operatorId() const { return m_operatorId; }
+QString VentilatorController::patientCategory() const { return m_patientCategory; }
+int VentilatorController::patientIbwKg() const { return m_patientIbwKg; }
+bool VentilatorController::backendConnected() const { return m_backendConnected; }
+bool VentilatorController::degradedMode() const { return m_degradedMode; }
+QString VentilatorController::backendState() const { return m_backendState; }
 QVariantList VentilatorController::pressureWaveform() const { return m_pressureWaveform; }
 QVariantList VentilatorController::flowWaveform() const { return m_flowWaveform; }
 QVariantList VentilatorController::volumeWaveform() const { return m_volumeWaveform; }
@@ -111,6 +123,12 @@ void VentilatorController::startVentilation()
     }
     if (m_running)
         return;
+    if (m_degradedMode) {
+        const QString message = QStringLiteral("Cannot start: backend is in degraded mode");
+        setCommandMessage(message);
+        emit commandRejected(message);
+        return;
+    }
     m_running = true;
     m_ventilationSeconds = 0;
     m_sampleTimer.start();
@@ -153,6 +171,59 @@ void VentilatorController::stopVentilation()
     emit runningChanged();
     emit measurementsChanged();
     emit waveformChanged();
+}
+
+void VentilatorController::setOperatorId(const QString &operatorId)
+{
+    const QString normalized = operatorId.trimmed().isEmpty()
+        ? QStringLiteral("unauthenticated")
+        : operatorId.trimmed();
+    if (m_operatorId == normalized)
+        return;
+    m_operatorId = normalized;
+    emit operatorChanged();
+}
+
+void VentilatorController::setPatientContext(const QString &category)
+{
+    const QString normalized = category.trimmed().isEmpty()
+        ? QStringLiteral("Adult")
+        : category.trimmed();
+    if (m_patientCategory == normalized)
+        return;
+    m_patientCategory = normalized;
+    setCommandMessage(QStringLiteral("Patient category set to %1").arg(normalized));
+    emit patientContextChanged();
+}
+
+void VentilatorController::setPatientIbwKg(int ibwKg)
+{
+    ibwKg = qBound(1, ibwKg, 180);
+    if (m_patientIbwKg == ibwKg)
+        return;
+    m_patientIbwKg = ibwKg;
+    emit patientContextChanged();
+}
+
+void VentilatorController::recordHardwareHeartbeat()
+{
+    m_lastHardwareHeartbeatUtc = QDateTime::currentDateTimeUtc();
+    if (!m_backendConnected || m_degradedMode) {
+        m_backendConnected = true;
+        setDegradedMode(false, QStringLiteral("Simulator connected"));
+    }
+}
+
+void VentilatorController::setBackendConnected(bool connected)
+{
+    m_backendConnected = connected;
+    if (connected) {
+        m_lastHardwareHeartbeatUtc = QDateTime::currentDateTimeUtc();
+        setDegradedMode(false, QStringLiteral("Simulator connected"));
+    } else {
+        setDegradedMode(true, QStringLiteral("Backend disconnected"));
+    }
+    emit backendStateChanged();
 }
 
 void VentilatorController::toggleFreeze()
@@ -307,13 +378,13 @@ bool VentilatorController::applyParameterChange(const QString &parameter, int va
     } else if (parameter == QStringLiteral("inspiratoryTime")) {
         target = &m_inspiratoryTime; low = 1; high = 5; label = QStringLiteral("Inspiratory time"); unit = QStringLiteral("s");
     } else if (parameter == QStringLiteral("respiratoryRate")) {
-        target = &m_respiratoryRate; low = 4; high = 60; label = QStringLiteral("Respiratory rate"); unit = QStringLiteral("1/min");
+        target = &m_respiratoryRate; low = categoryMinRr(); high = categoryMaxRr(); label = QStringLiteral("Respiratory rate"); unit = QStringLiteral("1/min");
     } else if (parameter == QStringLiteral("trigger")) {
         target = &m_trigger; low = 1; high = 10; label = QStringLiteral("Trigger"); unit = QStringLiteral("L/min");
     } else if (parameter == QStringLiteral("minuteVolume")) {
         target = &m_minuteVolume; low = 20; high = 400; label = QStringLiteral("%MinVol"); unit = QStringLiteral("%");
     } else if (parameter == QStringLiteral("tidalVolume")) {
-        target = &m_tidalVolume; low = 20; high = 900; label = QStringLiteral("Tidal volume"); unit = QStringLiteral("mL");
+        target = &m_tidalVolume; low = categoryMinVt(); high = categoryMaxVt(); label = QStringLiteral("Tidal volume"); unit = QStringLiteral("mL");
     }
 
     if (!target) {
@@ -329,6 +400,13 @@ bool VentilatorController::applyParameterChange(const QString &parameter, int va
         const QString message = QStringLiteral("%1 limited to %2 %3").arg(label).arg(value).arg(unit);
         setCommandMessage(message);
         emit commandRejected(message);
+        return false;
+    }
+
+    QString envelopeReason;
+    if (!validateSettingEnvelope(parameter, value, &envelopeReason)) {
+        setCommandMessage(envelopeReason);
+        emit commandRejected(envelopeReason);
         return false;
     }
 
@@ -411,6 +489,11 @@ bool VentilatorController::validateMode(const QString &mode, QString *reason) co
 
 bool VentilatorController::validateStart(QString *reason) const
 {
+    if (m_degradedMode) {
+        if (reason)
+            *reason = QStringLiteral("Cannot start: backend communication is degraded");
+        return false;
+    }
     if (m_alarmLowPressure >= m_alarmHighPressure) {
         if (reason)
             *reason = QStringLiteral("Cannot start: pressure alarm limits are invalid");
@@ -421,12 +504,98 @@ bool VentilatorController::validateStart(QString *reason) const
             *reason = QStringLiteral("Cannot start: PEEP is above the high pressure alarm limit");
         return false;
     }
+    if (m_peep + m_pressureSupport + 5 >= m_alarmHighPressure) {
+        if (reason)
+            *reason = QStringLiteral("Cannot start: pressure support plus PEEP is too close to high pressure alarm");
+        return false;
+    }
     if (m_tidalVolume < 20 || m_respiratoryRate < 4 || m_fio2 < 21) {
         if (reason)
             *reason = QStringLiteral("Cannot start: ventilator settings are incomplete");
         return false;
     }
+    return validateSettingEnvelope(QStringLiteral("start"), 0, reason);
+}
+
+bool VentilatorController::validateSettingEnvelope(const QString &parameter, int value, QString *reason) const
+{
+    const int prospectiveFio2 = parameter == QStringLiteral("fio2") ? value : m_fio2;
+    const int prospectivePeep = parameter == QStringLiteral("peep") ? value : m_peep;
+    const int prospectivePressureSupport = parameter == QStringLiteral("pressureSupport") ? value : m_pressureSupport;
+    const int prospectiveInspiratoryTime = parameter == QStringLiteral("inspiratoryTime") ? value : m_inspiratoryTime;
+    const int prospectiveRate = parameter == QStringLiteral("respiratoryRate") ? value : m_respiratoryRate;
+    const int prospectiveTidalVolume = parameter == QStringLiteral("tidalVolume") ? value : m_tidalVolume;
+
+    const double cycleSeconds = 60.0 / qMax(1, prospectiveRate);
+    if (prospectiveInspiratoryTime >= cycleSeconds * 0.80) {
+        if (reason)
+            *reason = QStringLiteral("Rejected: inspiratory time is incompatible with respiratory rate");
+        return false;
+    }
+
+    if (prospectivePeep + prospectivePressureSupport >= m_alarmHighPressure - 3) {
+        if (reason)
+            *reason = QStringLiteral("Rejected: PEEP + pressure support is too close to high pressure alarm");
+        return false;
+    }
+
+    if (prospectiveTidalVolume < categoryMinVt() || prospectiveTidalVolume > categoryMaxVt()) {
+        if (reason)
+            *reason = QStringLiteral("Rejected: tidal volume outside %1 patient safe range (%2-%3 mL)")
+                .arg(m_patientCategory).arg(categoryMinVt()).arg(categoryMaxVt());
+        return false;
+    }
+
+    if (prospectiveRate < categoryMinRr() || prospectiveRate > categoryMaxRr()) {
+        if (reason)
+            *reason = QStringLiteral("Rejected: respiratory rate outside %1 patient safe range (%2-%3 1/min)")
+                .arg(m_patientCategory).arg(categoryMinRr()).arg(categoryMaxRr());
+        return false;
+    }
+
+    if (prospectiveFio2 > 80 && parameter == QStringLiteral("fio2")) {
+        if (reason)
+            *reason = QStringLiteral("Rejected: FiO2 above 80% requires high oxygen therapy confirmation workflow");
+        return false;
+    }
+
     return true;
+}
+
+int VentilatorController::categoryMinVt() const
+{
+    if (m_patientCategory == QStringLiteral("Neonatal"))
+        return qMax(10, m_patientIbwKg * 4);
+    if (m_patientCategory == QStringLiteral("Pediatric"))
+        return qMax(30, m_patientIbwKg * 5);
+    return qMax(150, m_patientIbwKg * 4);
+}
+
+int VentilatorController::categoryMaxVt() const
+{
+    if (m_patientCategory == QStringLiteral("Neonatal"))
+        return qMin(80, m_patientIbwKg * 8);
+    if (m_patientCategory == QStringLiteral("Pediatric"))
+        return qMin(500, m_patientIbwKg * 10);
+    return qMin(900, m_patientIbwKg * 10);
+}
+
+int VentilatorController::categoryMinRr() const
+{
+    if (m_patientCategory == QStringLiteral("Neonatal"))
+        return 20;
+    if (m_patientCategory == QStringLiteral("Pediatric"))
+        return 10;
+    return 4;
+}
+
+int VentilatorController::categoryMaxRr() const
+{
+    if (m_patientCategory == QStringLiteral("Neonatal"))
+        return 80;
+    if (m_patientCategory == QStringLiteral("Pediatric"))
+        return 50;
+    return 35;
 }
 
 void VentilatorController::setCommandMessage(const QString &message)
@@ -437,14 +606,47 @@ void VentilatorController::setCommandMessage(const QString &message)
     emit commandMessageChanged();
 }
 
+void VentilatorController::setDegradedMode(bool degraded, const QString &state)
+{
+    const bool changed = m_degradedMode != degraded || m_backendState != state;
+    m_degradedMode = degraded;
+    m_backendState = state;
+    if (degraded && m_running)
+        stopVentilation();
+    if (m_alarmController && degraded) {
+        m_alarmController->raiseAlarm(QStringLiteral("Critical"),
+                                      QStringLiteral("Backend"),
+                                      QStringLiteral("Backend Disconnected"),
+                                      state);
+    }
+    if (changed)
+        emit backendStateChanged();
+}
+
 void VentilatorController::logSettingChange(const QString &parameter, const QVariant &oldValue, const QVariant &newValue)
 {
     if (!m_database)
         return;
     m_database->logEvent(QStringLiteral("Setting"),
-                         QStringLiteral("%1 changed from %2 to %3")
-                             .arg(parameter, oldValue.toString(), newValue.toString()),
+                         QStringLiteral("%1 changed from %2 to %3 by %4")
+                             .arg(parameter, oldValue.toString(), newValue.toString(), m_operatorId),
                          QStringLiteral("Applied"));
+}
+
+void VentilatorController::checkBackendHeartbeat()
+{
+    if (!m_backendConnected)
+        return;
+    if (!m_running) {
+        m_lastHardwareHeartbeatUtc = QDateTime::currentDateTimeUtc();
+        return;
+    }
+    const qint64 ageMs = m_lastHardwareHeartbeatUtc.msecsTo(QDateTime::currentDateTimeUtc());
+    if (ageMs > 5000) {
+        m_backendConnected = false;
+        setDegradedMode(true, QStringLiteral("No backend heartbeat for more than 5 seconds"));
+        emit backendStateChanged();
+    }
 }
 
 void VentilatorController::appendSample(QVariantList &buffer, double value)
@@ -477,6 +679,8 @@ void VentilatorController::updateSimulation()
     // -----------------------------------------------------------------------
     if (!m_running)
         return;
+
+    recordHardwareHeartbeat();
 
     ++m_sampleIndex;
     const double dt = m_sampleTimer.interval() / 1000.0;

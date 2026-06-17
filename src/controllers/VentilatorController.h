@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QDateTime>
 #include <QTimer>
 #include <QVariantList>
 
@@ -45,6 +46,12 @@ class VentilatorController : public QObject
     Q_PROPERTY(QString ieRatio READ ieRatio NOTIFY measurementsChanged)
     Q_PROPERTY(QString ventilationTime READ ventilationTime NOTIFY measurementsChanged)
     Q_PROPERTY(QString lastCommandMessage READ lastCommandMessage NOTIFY commandMessageChanged)
+    Q_PROPERTY(QString operatorId READ operatorId WRITE setOperatorId NOTIFY operatorChanged)
+    Q_PROPERTY(QString patientCategory READ patientCategory WRITE setPatientContext NOTIFY patientContextChanged)
+    Q_PROPERTY(int patientIbwKg READ patientIbwKg WRITE setPatientIbwKg NOTIFY patientContextChanged)
+    Q_PROPERTY(bool backendConnected READ backendConnected NOTIFY backendStateChanged)
+    Q_PROPERTY(bool degradedMode READ degradedMode NOTIFY backendStateChanged)
+    Q_PROPERTY(QString backendState READ backendState NOTIFY backendStateChanged)
 
     // Clinical decision support metrics (simulated)
     Q_PROPERTY(double workOfBreathing READ workOfBreathing NOTIFY measurementsChanged)
@@ -129,6 +136,12 @@ public:
     QString ventilationTime() const;
     /** @return Last accepted/rejected operator command status. */
     QString lastCommandMessage() const;
+    QString operatorId() const;
+    QString patientCategory() const;
+    int patientIbwKg() const;
+    bool backendConnected() const;
+    bool degradedMode() const;
+    QString backendState() const;
 
     /** @return Simulated work of breathing in J/L. Normal 0.3-0.7. */
     double workOfBreathing() const;
@@ -186,6 +199,10 @@ public:
     Q_INVOKABLE bool requestModeChange(const QString &mode);
     /** @brief Validated operator command for enabling/disabling apnea backup. */
     Q_INVOKABLE bool requestApneaBackupChange(bool enabled);
+    /** @brief Simulated future hardware heartbeat. */
+    Q_INVOKABLE void recordHardwareHeartbeat();
+    /** @brief Simulates hardware link loss/recovery for demo and tests. */
+    Q_INVOKABLE void setBackendConnected(bool connected);
 
 public slots:
     /** @param value Ventilation mode identifier to apply. */
@@ -214,6 +231,9 @@ public slots:
     void setAlarmHighMv(int value);
     void setAlarmLowSpo2(int value);
     void setApneaBackupEnabled(bool value);
+    void setOperatorId(const QString &operatorId);
+    void setPatientContext(const QString &category);
+    void setPatientIbwKg(int ibwKg);
 
 signals:
     void runningChanged();
@@ -223,9 +243,13 @@ signals:
     void waveformChanged();
     void commandMessageChanged();
     void commandRejected(const QString &message);
+    void operatorChanged();
+    void patientContextChanged();
+    void backendStateChanged();
 
 private slots:
     void updateSimulation();
+    void checkBackendHeartbeat();
 
 private:
     void appendSample(QVariantList &buffer, double value);
@@ -236,7 +260,13 @@ private:
     bool applyAlarmLimitChange(const QString &limit, int value, bool audited);
     bool validateMode(const QString &mode, QString *reason) const;
     bool validateStart(QString *reason) const;
+    bool validateSettingEnvelope(const QString &parameter, int value, QString *reason) const;
+    int categoryMinVt() const;
+    int categoryMaxVt() const;
+    int categoryMinRr() const;
+    int categoryMaxRr() const;
     void setCommandMessage(const QString &message);
+    void setDegradedMode(bool degraded, const QString &state);
     void logSettingChange(const QString &parameter, const QVariant &oldValue, const QVariant &newValue);
 
     DatabaseManager *m_database = nullptr;
@@ -244,9 +274,16 @@ private:
     QTimer m_sampleTimer;
     bool m_running = false;
     bool m_frozen = false;
+    bool m_backendConnected = true;
+    bool m_degradedMode = false;
     QString m_mode = QStringLiteral("ASV");
     QString m_lastCommandMessage;
+    QString m_operatorId = QStringLiteral("unauthenticated");
+    QString m_patientCategory = QStringLiteral("Adult");
+    QString m_backendState = QStringLiteral("Simulator connected");
+    QDateTime m_lastHardwareHeartbeatUtc;
     int m_fio2 = 60;
+    int m_patientIbwKg = 73;
     int m_peep = 15;
     int m_pressureSupport = 12;
     int m_inspiratoryTime = 1;
@@ -284,6 +321,7 @@ private:
     int m_snapshotCounter = 0;
     int m_ventilationSeconds = 0;
     QTimer m_ventilationTimer;
+    QTimer m_backendWatchdogTimer;
     QVariantList m_pressureWaveform;
     QVariantList m_flowWaveform;
     QVariantList m_volumeWaveform;

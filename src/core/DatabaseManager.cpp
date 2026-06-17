@@ -2,6 +2,7 @@
 
 #include <QDateTime>
 #include <QDir>
+#include <QMetaObject>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QStandardPaths>
@@ -9,7 +10,180 @@
 #include <QDebug>
 #include <QFile>
 #include <QFileInfo>
+#include <QStorageInfo>
 #include <QTextStream>
+
+namespace {
+constexpr qint64 kMinimumFreeBytes = 10 * 1024 * 1024;
+
+QString hashEventPayload(const QString &previousHash,
+                         const QString &timestamp,
+                         const QString &source,
+                         const QString &description,
+                         const QString &status)
+{
+    return QString::fromLatin1(QCryptographicHash::hash(
+        (previousHash + timestamp + source + description + status).toUtf8(),
+        QCryptographicHash::Sha256).toHex());
+}
+
+QString sqlString(const QString &value)
+{
+    QString escaped = value;
+    escaped.replace(QLatin1Char('\''), QStringLiteral("''"));
+    return QStringLiteral("'") + escaped + QStringLiteral("'");
+}
+}
+
+class DatabaseWriteWorker : public QObject
+{
+    Q_OBJECT
+
+public:
+    explicit DatabaseWriteWorker(QString databasePath)
+        : m_databasePath(std::move(databasePath))
+    {
+    }
+
+public slots:
+    void open()
+    {
+        const QString connectionName = QStringLiteral("SmartVentilatorWriter_%1")
+            .arg(reinterpret_cast<quintptr>(QThread::currentThreadId()));
+        m_database = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
+        m_database.setDatabaseName(m_databasePath);
+        if (!m_database.open()) {
+            emit writeFailed(QStringLiteral("Async database writer open failed: ")
+                             + m_database.lastError().text());
+        }
+    }
+
+    void close()
+    {
+        const QString connectionName = m_database.connectionName();
+        if (m_database.isOpen())
+            m_database.close();
+        m_database = {};
+        if (!connectionName.isEmpty())
+            QSqlDatabase::removeDatabase(connectionName);
+    }
+
+    void logEvent(const QString &source, const QString &description, const QString &status)
+    {
+        if (!ensureOpen())
+            return;
+
+        const QString timestamp = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+        QString previousHash;
+        QSqlQuery prev(m_database);
+        if (prev.exec(QStringLiteral("SELECT hash FROM events ORDER BY id DESC LIMIT 1"))
+            && prev.next()) {
+            previousHash = prev.value(0).toString();
+        }
+
+        const QString hash = hashEventPayload(previousHash, timestamp, source, description, status);
+        QSqlQuery query(m_database);
+        if (!query.exec(QStringLiteral(
+                "INSERT INTO events(created_at, source, description, status, hash) "
+                "VALUES(%1, %2, %3, %4, %5)")
+                .arg(sqlString(timestamp),
+                     sqlString(source),
+                     sqlString(description),
+                     sqlString(status),
+                     sqlString(hash)))) {
+            qWarning() << "DatabaseManager:"
+                       << QStringLiteral("Unable to insert event: ") + query.lastError().text();
+        }
+    }
+
+    void logAlarm(const QString &priority,
+                  const QString &source,
+                  const QString &description,
+                  const QString &status)
+    {
+        if (!ensureOpen())
+            return;
+
+        QSqlQuery query(m_database);
+        query.prepare(QStringLiteral(
+            "INSERT INTO alarms(created_at, priority, source, description, status) "
+            "VALUES(?, ?, ?, ?, ?)"));
+        query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+        query.addBindValue(priority);
+        query.addBindValue(source);
+        query.addBindValue(description);
+        query.addBindValue(status);
+        exec(query, QStringLiteral("Unable to insert alarm"));
+    }
+
+    void saveParameterSnapshot(const QVariantMap &snapshot)
+    {
+        if (!ensureOpen())
+            return;
+
+        QSqlQuery query(m_database);
+        query.prepare(QStringLiteral(
+            "INSERT INTO parameter_snapshots(created_at, mode, fio2, peep, pressure_support, "
+            "respiratory_rate, minute_volume, tidal_volume, ppeak, pplat, pmean, spo2, etco2, "
+            "compliance, resistance) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"));
+        query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+        query.addBindValue(snapshot.value(QStringLiteral("mode")));
+        query.addBindValue(snapshot.value(QStringLiteral("fio2")));
+        query.addBindValue(snapshot.value(QStringLiteral("peep")));
+        query.addBindValue(snapshot.value(QStringLiteral("pressureSupport")));
+        query.addBindValue(snapshot.value(QStringLiteral("respiratoryRate")));
+        query.addBindValue(snapshot.value(QStringLiteral("minuteVolume")));
+        query.addBindValue(snapshot.value(QStringLiteral("tidalVolume")));
+        query.addBindValue(snapshot.value(QStringLiteral("ppeak")));
+        query.addBindValue(snapshot.value(QStringLiteral("pplat")));
+        query.addBindValue(snapshot.value(QStringLiteral("pmean")));
+        query.addBindValue(snapshot.value(QStringLiteral("spo2")));
+        query.addBindValue(snapshot.value(QStringLiteral("etco2")));
+        query.addBindValue(snapshot.value(QStringLiteral("compliance")));
+        query.addBindValue(snapshot.value(QStringLiteral("resistance")));
+        exec(query, QStringLiteral("Unable to insert snapshot"));
+    }
+
+    void savePatientProfile(const QVariantMap &profile)
+    {
+        if (!ensureOpen())
+            return;
+
+        QSqlQuery query(m_database);
+        query.prepare(QStringLiteral(
+            "INSERT INTO patient_profiles(created_at, category, gender, age, height, weight, ibw) "
+            "VALUES(?, ?, ?, ?, ?, ?, ?)"));
+        query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+        query.addBindValue(profile.value(QStringLiteral("category")));
+        query.addBindValue(profile.value(QStringLiteral("gender")));
+        query.addBindValue(profile.value(QStringLiteral("age")));
+        query.addBindValue(profile.value(QStringLiteral("height")));
+        query.addBindValue(profile.value(QStringLiteral("weight")));
+        query.addBindValue(profile.value(QStringLiteral("ibw")));
+        exec(query, QStringLiteral("Unable to save patient profile"));
+    }
+
+signals:
+    void writeFailed(const QString &message);
+
+private:
+    bool ensureOpen()
+    {
+        if (m_database.isOpen())
+            return true;
+        open();
+        return m_database.isOpen();
+    }
+
+    void exec(QSqlQuery &query, const QString &context)
+    {
+        if (!query.exec())
+            emit writeFailed(context + QStringLiteral(": ") + query.lastError().text());
+    }
+
+    QString m_databasePath;
+    QSqlDatabase m_database;
+};
 
 DatabaseManager::DatabaseManager(QObject *parent)
     : QObject(parent)
@@ -18,6 +192,7 @@ DatabaseManager::DatabaseManager(QObject *parent)
 
 DatabaseManager::~DatabaseManager()
 {
+    stopAsyncWriter();
     if (m_database.isOpen())
         m_database.close();
 }
@@ -29,8 +204,15 @@ bool DatabaseManager::initialize()
     // SQLCipher for at-rest encryption of clinical records.
 
     const QString dataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    QDir().mkpath(dataDir);
+    if (dataDir.isEmpty() || !QDir().mkpath(dataDir)) {
+        setStorageState(false, true, true, QStringLiteral("Application data directory unavailable"));
+        setError(QStringLiteral("Unable to create application data directory"));
+        return false;
+    }
     m_databasePath = dataDir + QStringLiteral("/smart_ventilator_demo.sqlite");
+
+    if (!checkStorageHealth())
+        return false;
 
     const QString connectionName = QStringLiteral("SmartVentilatorConnection");
     if (QSqlDatabase::contains(connectionName))
@@ -40,11 +222,19 @@ bool DatabaseManager::initialize()
 
     m_database.setDatabaseName(m_databasePath);
     if (!m_database.open()) {
+        setStorageState(false, true, true, QStringLiteral("Database open failed"));
         setError(QStringLiteral("Unable to open database: ") + m_database.lastError().text());
         return false;
     }
 
-    return executeSchema();
+    if (!executeSchema()) {
+        setStorageState(false, false, true, QStringLiteral("Database schema failed"));
+        return false;
+    }
+
+    setStorageState(true, false, false, QStringLiteral("Ready"));
+    startAsyncWriter();
+    return true;
 }
 
 QString DatabaseManager::databasePath() const
@@ -57,11 +247,83 @@ QString DatabaseManager::lastError() const
     return m_lastError;
 }
 
+bool DatabaseManager::ready() const { return m_ready; }
+bool DatabaseManager::readOnly() const { return m_readOnly; }
+bool DatabaseManager::degraded() const { return m_degraded; }
+QString DatabaseManager::storageState() const { return m_storageState; }
+
 void DatabaseManager::setError(const QString &message)
 {
     m_lastError = message;
     qWarning() << "DatabaseManager:" << message;
     emit errorOccurred(message);
+}
+
+void DatabaseManager::setStorageState(bool ready, bool readOnly, bool degraded, const QString &state)
+{
+    const bool changed = m_ready != ready
+        || m_readOnly != readOnly
+        || m_degraded != degraded
+        || m_storageState != state;
+    m_ready = ready;
+    m_readOnly = readOnly;
+    m_degraded = degraded;
+    m_storageState = state;
+    if (changed)
+        emit storageStateChanged();
+}
+
+bool DatabaseManager::checkStorageHealth()
+{
+    const QFileInfo info(m_databasePath);
+    const QStorageInfo storage(info.absolutePath());
+    if (!storage.isValid() || !storage.isReady()) {
+        setStorageState(false, true, true, QStringLiteral("Storage not ready"));
+        setError(QStringLiteral("Storage volume is not ready"));
+        return false;
+    }
+    if (storage.bytesAvailable() >= 0 && storage.bytesAvailable() < kMinimumFreeBytes) {
+        setStorageState(false, true, true, QStringLiteral("Storage full"));
+        setError(QStringLiteral("Storage full: less than 10 MB available"));
+        return false;
+    }
+
+    QFile probe(info.absolutePath() + QStringLiteral("/.smart_ventilator_write_test"));
+    if (!probe.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        setStorageState(false, true, true, QStringLiteral("Read-only filesystem"));
+        setError(QStringLiteral("Storage is read-only: ") + probe.errorString());
+        return false;
+    }
+    probe.write("ok");
+    probe.close();
+    probe.remove();
+    return true;
+}
+
+void DatabaseManager::startAsyncWriter()
+{
+    if (m_writer || m_databasePath.isEmpty())
+        return;
+
+    m_writer = new DatabaseWriteWorker(m_databasePath);
+    m_writer->moveToThread(&m_writerThread);
+    connect(&m_writerThread, &QThread::started, m_writer, &DatabaseWriteWorker::open);
+    connect(&m_writerThread, &QThread::finished, m_writer, &QObject::deleteLater);
+    connect(m_writer, &DatabaseWriteWorker::writeFailed, this, [this](const QString &message) {
+        setStorageState(m_ready, m_readOnly, true, QStringLiteral("Async write failure"));
+        setError(message);
+    });
+    m_writerThread.start();
+}
+
+void DatabaseManager::stopAsyncWriter()
+{
+    if (!m_writer)
+        return;
+    QMetaObject::invokeMethod(m_writer, "close", Qt::BlockingQueuedConnection);
+    m_writerThread.quit();
+    m_writerThread.wait();
+    m_writer = nullptr;
 }
 
 bool DatabaseManager::executeSchema()
@@ -94,8 +356,11 @@ bool DatabaseManager::executeSchema()
         "id INTEGER PRIMARY KEY AUTOINCREMENT,"
         "username TEXT NOT NULL UNIQUE,"
         "pin_hash TEXT NOT NULL,"
+        "salt TEXT NOT NULL DEFAULT '',"
         "role TEXT NOT NULL,"
         "full_name TEXT NOT NULL,"
+        "failed_attempts INTEGER NOT NULL DEFAULT 0,"
+        "locked_until TEXT NOT NULL DEFAULT '',"
         "created_at TEXT NOT NULL)",
         "CREATE TABLE IF NOT EXISTS parameter_snapshots ("
         "id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -160,42 +425,48 @@ bool DatabaseManager::executeSchema()
         }
     }
 
+    struct ColumnPatch {
+        const char *table;
+        const char *column;
+        const char *alterSql;
+    };
+    static const ColumnPatch patches[] = {
+        { "events", "hash", "ALTER TABLE events ADD COLUMN hash TEXT NOT NULL DEFAULT ''" },
+        { "users", "salt", "ALTER TABLE users ADD COLUMN salt TEXT NOT NULL DEFAULT ''" },
+        { "users", "failed_attempts", "ALTER TABLE users ADD COLUMN failed_attempts INTEGER NOT NULL DEFAULT 0" },
+        { "users", "locked_until", "ALTER TABLE users ADD COLUMN locked_until TEXT NOT NULL DEFAULT ''" }
+    };
+
+    for (const auto &patch : patches) {
+        QSqlQuery columns(m_database);
+        columns.exec(QStringLiteral("PRAGMA table_info(%1)").arg(QString::fromLatin1(patch.table)));
+        bool exists = false;
+        while (columns.next()) {
+            if (columns.value(1).toString() == QString::fromLatin1(patch.column)) {
+                exists = true;
+                break;
+            }
+        }
+        if (!exists) {
+            QSqlQuery alter(m_database);
+            if (!alter.exec(QString::fromLatin1(patch.alterSql))) {
+                setError(QStringLiteral("Schema migration error: ") + alter.lastError().text());
+                return false;
+            }
+        }
+    }
+
     return true;
 }
 
 void DatabaseManager::logEvent(const QString &source, const QString &description, const QString &status)
 {
-    if (!m_database.isOpen())
+    if (!m_writer || !m_ready)
         return;
-
-    const QString timestamp = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
-
-    // Retrieve the hash of the previous event for chain integrity.
-    QString previousHash;
-    {
-        QSqlQuery prev(m_database);
-        if (prev.exec(QStringLiteral("SELECT hash FROM events ORDER BY id DESC LIMIT 1"))
-            && prev.next()) {
-            previousHash = prev.value(0).toString();
-        }
-    }
-
-    // Compute SHA-256 hash: H(previousHash + timestamp + source + description + status)
-    const QString payload = previousHash + timestamp + source + description + status;
-    const QByteArray hash = QCryptographicHash::hash(
-        payload.toUtf8(), QCryptographicHash::Sha256).toHex();
-
-    QSqlQuery query(m_database);
-    query.prepare(QStringLiteral(
-        "INSERT INTO events(created_at, source, description, status, hash) "
-        "VALUES(?, ?, ?, ?, ?)"));
-    query.addBindValue(timestamp);
-    query.addBindValue(source);
-    query.addBindValue(description);
-    query.addBindValue(status);
-    query.addBindValue(QString::fromLatin1(hash));
-    if (!query.exec())
-        setError(QStringLiteral("Unable to insert event: ") + query.lastError().text());
+    QMetaObject::invokeMethod(m_writer, "logEvent", Qt::QueuedConnection,
+                              Q_ARG(QString, source),
+                              Q_ARG(QString, description),
+                              Q_ARG(QString, status));
 }
 
 void DatabaseManager::logAlarm(const QString &priority,
@@ -203,68 +474,29 @@ void DatabaseManager::logAlarm(const QString &priority,
                                const QString &description,
                                const QString &status)
 {
-    if (!m_database.isOpen())
+    if (!m_writer || !m_ready)
         return;
-
-    QSqlQuery query(m_database);
-    query.prepare(QStringLiteral(
-        "INSERT INTO alarms(created_at, priority, source, description, status) VALUES(?, ?, ?, ?, ?)"));
-    query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
-    query.addBindValue(priority);
-    query.addBindValue(source);
-    query.addBindValue(description);
-    query.addBindValue(status);
-    if (!query.exec())
-        setError(QStringLiteral("Unable to insert alarm: ") + query.lastError().text());
+    QMetaObject::invokeMethod(m_writer, "logAlarm", Qt::QueuedConnection,
+                              Q_ARG(QString, priority),
+                              Q_ARG(QString, source),
+                              Q_ARG(QString, description),
+                              Q_ARG(QString, status));
 }
 
 void DatabaseManager::saveParameterSnapshot(const QVariantMap &snapshot)
 {
-    if (!m_database.isOpen())
+    if (!m_writer || !m_ready)
         return;
-
-    QSqlQuery query(m_database);
-    query.prepare(QStringLiteral(
-        "INSERT INTO parameter_snapshots(created_at, mode, fio2, peep, pressure_support, "
-        "respiratory_rate, minute_volume, tidal_volume, ppeak, pplat, pmean, spo2, etco2, "
-        "compliance, resistance) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"));
-    query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
-    query.addBindValue(snapshot.value(QStringLiteral("mode")));
-    query.addBindValue(snapshot.value(QStringLiteral("fio2")));
-    query.addBindValue(snapshot.value(QStringLiteral("peep")));
-    query.addBindValue(snapshot.value(QStringLiteral("pressureSupport")));
-    query.addBindValue(snapshot.value(QStringLiteral("respiratoryRate")));
-    query.addBindValue(snapshot.value(QStringLiteral("minuteVolume")));
-    query.addBindValue(snapshot.value(QStringLiteral("tidalVolume")));
-    query.addBindValue(snapshot.value(QStringLiteral("ppeak")));
-    query.addBindValue(snapshot.value(QStringLiteral("pplat")));
-    query.addBindValue(snapshot.value(QStringLiteral("pmean")));
-    query.addBindValue(snapshot.value(QStringLiteral("spo2")));
-    query.addBindValue(snapshot.value(QStringLiteral("etco2")));
-    query.addBindValue(snapshot.value(QStringLiteral("compliance")));
-    query.addBindValue(snapshot.value(QStringLiteral("resistance")));
-    if (!query.exec())
-        setError(QStringLiteral("Unable to insert snapshot: ") + query.lastError().text());
+    QMetaObject::invokeMethod(m_writer, "saveParameterSnapshot", Qt::QueuedConnection,
+                              Q_ARG(QVariantMap, snapshot));
 }
 
 void DatabaseManager::savePatientProfile(const QVariantMap &profile)
 {
-    if (!m_database.isOpen())
+    if (!m_writer || !m_ready)
         return;
-
-    QSqlQuery query(m_database);
-    query.prepare(QStringLiteral(
-        "INSERT INTO patient_profiles(created_at, category, gender, age, height, weight, ibw) "
-        "VALUES(?, ?, ?, ?, ?, ?, ?)"));
-    query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
-    query.addBindValue(profile.value(QStringLiteral("category")));
-    query.addBindValue(profile.value(QStringLiteral("gender")));
-    query.addBindValue(profile.value(QStringLiteral("age")));
-    query.addBindValue(profile.value(QStringLiteral("height")));
-    query.addBindValue(profile.value(QStringLiteral("weight")));
-    query.addBindValue(profile.value(QStringLiteral("ibw")));
-    if (!query.exec())
-        setError(QStringLiteral("Unable to save patient profile: ") + query.lastError().text());
+    QMetaObject::invokeMethod(m_writer, "savePatientProfile", Qt::QueuedConnection,
+                              Q_ARG(QVariantMap, profile));
 }
 
 QVariantMap DatabaseManager::loadLastPatientProfile()
@@ -321,11 +553,7 @@ bool DatabaseManager::verifyAuditTrail()
             continue;
         }
 
-        const QString payload = previousHash + timestamp + source + description + status;
-        const QByteArray expected = QCryptographicHash::hash(
-            payload.toUtf8(), QCryptographicHash::Sha256).toHex();
-
-        if (QString::fromLatin1(expected) != storedHash) {
+        if (hashEventPayload(previousHash, timestamp, source, description, status) != storedHash) {
             setError(QStringLiteral("Audit trail integrity failure at event row %1").arg(row));
             return false;
         }
@@ -675,3 +903,5 @@ QString DatabaseManager::exportAuditSummary() const
     }
     return path;
 }
+
+#include "DatabaseManager.moc"

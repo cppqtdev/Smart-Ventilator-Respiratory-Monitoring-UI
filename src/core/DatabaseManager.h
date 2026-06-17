@@ -3,8 +3,11 @@
 #include <QObject>
 #include <QSqlDatabase>
 #include <QString>
+#include <QThread>
 #include <QVariantMap>
 #include <QCryptographicHash>
+
+class DatabaseWriteWorker;
 
 /**
  * @brief Owns the application SQLite database connection and schema lifecycle.
@@ -19,6 +22,10 @@ class DatabaseManager : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString lastError READ lastError NOTIFY errorOccurred)
+    Q_PROPERTY(bool ready READ ready NOTIFY storageStateChanged)
+    Q_PROPERTY(bool readOnly READ readOnly NOTIFY storageStateChanged)
+    Q_PROPERTY(bool degraded READ degraded NOTIFY storageStateChanged)
+    Q_PROPERTY(QString storageState READ storageState NOTIFY storageStateChanged)
 
 public:
     explicit DatabaseManager(QObject *parent = nullptr);
@@ -77,6 +84,10 @@ public:
 
     /** @return Most recent database error message, empty if no error. */
     QString lastError() const;
+    bool ready() const;
+    bool readOnly() const;
+    bool degraded() const;
+    QString storageState() const;
 
     /**
      * @brief Verifies the SHA-256 hash chain integrity of the events table.
@@ -111,11 +122,22 @@ public:
 signals:
     /** @brief Emitted when a database write operation fails. */
     void errorOccurred(const QString &message);
+    void storageStateChanged();
 
 private:
     void setError(const QString &message);
+    void setStorageState(bool ready, bool readOnly, bool degraded, const QString &state);
     bool executeSchema();
+    bool checkStorageHealth();
+    void startAsyncWriter();
+    void stopAsyncWriter();
     QString m_databasePath;
     QString m_lastError;
+    QString m_storageState = QStringLiteral("Not initialized");
     QSqlDatabase m_database;
+    QThread m_writerThread;
+    DatabaseWriteWorker *m_writer = nullptr;
+    bool m_ready = false;
+    bool m_readOnly = false;
+    bool m_degraded = true;
 };
