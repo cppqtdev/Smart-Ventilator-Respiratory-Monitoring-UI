@@ -101,22 +101,36 @@ public:
      * @return List of snapshot maps with timestamp and all parameter values.
      */
     Q_INVOKABLE QVariantList getParameterHistory(int minutes) const;
+    /** @return CSV-style summary of current clinical data for controlled export. */
     Q_INVOKABLE QString exportClinicalSummary() const;
+    /** @brief Persists a named clinical UI state value. */
     Q_INVOKABLE void saveClinicalState(const QString &key, const QVariant &value);
+    /** @return All persisted clinical UI state values. */
     Q_INVOKABLE QVariantMap loadClinicalState() const;
+    /** @brief Records a spontaneous breathing trial session. */
     Q_INVOKABLE void recordSbtSession(const QVariantMap &session);
+    /** @brief Records a maintenance action against a service item. */
     Q_INVOKABLE void recordMaintenance(const QString &item, const QString &action);
+    /** @return Recent spontaneous breathing trial sessions. */
     Q_INVOKABLE QVariantList getSbtHistory(int limit = 20) const;
+    /** @return Recent maintenance log entries. */
     Q_INVOKABLE QVariantList getMaintenanceHistory(int limit = 20) const;
+    /** @brief Records a respiratory maneuver result. */
     Q_INVOKABLE void recordManeuver(const QString &type, double result,
                                     const QString &unit, const QString &notes);
+    /** @return Recent respiratory maneuver results. */
     Q_INVOKABLE QVariantList getManeuverHistory(int limit = 20) const;
+    /** @brief Saves service schedule metadata for one maintenance item. */
     Q_INVOKABLE void saveMaintenanceSchedule(const QString &item,
                                              const QString &dueDate,
                                              bool acknowledged);
+    /** @return Persisted service schedule metadata. */
     Q_INVOKABLE QVariantList getMaintenanceSchedules() const;
+    /** @brief Saves one central-monitor patient tile snapshot. */
     Q_INVOKABLE void saveCentralPatient(const QVariantMap &patient);
+    /** @return Central-monitor patient tile snapshots. */
     Q_INVOKABLE QVariantList getCentralPatients() const;
+    /** @return CSV-style audit export combining events and alarms. */
     Q_INVOKABLE QString exportAuditSummary() const;
 
 signals:

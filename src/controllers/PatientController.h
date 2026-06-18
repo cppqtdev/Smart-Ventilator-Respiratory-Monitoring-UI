@@ -85,6 +85,8 @@ signals:
     void patientChanged();
 
 private:
+    void logPatientChange(const QString &field, const QVariant &oldValue, const QVariant &newValue);
+
     DatabaseManager *m_database = nullptr;
     QString m_category = QStringLiteral("Adult");
     QString m_profile = QStringLiteral("Recent patient");

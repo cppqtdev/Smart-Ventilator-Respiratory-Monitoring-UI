@@ -13,6 +13,8 @@
         <file>qml/components/cards/Panel.qml</file>
         <file>qml/components/cards/MetricTile.qml</file>
         <file>qml/components/cards/ModeCard.qml</file>
+        <file>qml/components/cards/MonitoringMetricSidebar.qml</file>
+        <file>qml/components/cards/VentilatorControlRail.qml</file>
         <file>qml/components/buttons/PrimaryButton.qml</file>
         <file>qml/components/charts/CircularKnob.qml</file>
         <file>qml/components/charts/WaveformChart.qml</file>
@@ -47,6 +49,7 @@
         <file>qml/assets/icons/mic.svg</file>
         <file>qml/assets/icons/person.svg</file>
         <file>qml/components/indicators/DateTimeBanner.qml</file>
+        <file>qml/components/indicators/SystemStatusBanner.qml</file>
         <file>qml/components/indicators/ScreenLockOverlay.qml</file>
         <file>qml/components/charts/CurvedSideButton.qml</file>
         <file>qml/components/charts/PressureControl.qml</file>

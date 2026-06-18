@@ -9,6 +9,9 @@ a declarative QML frontend.
 
 Developed by Alsons Technology.
 
+> This repository is a ventilator HMI simulator and architecture prototype. It is
+> not cleared or validated for clinical use.
+
 
 ## Table of Contents
 
@@ -20,7 +23,9 @@ Developed by Alsons Technology.
 - [Build Instructions](#build-instructions)
 - [Configuration](#configuration)
 - [Documentation Generation](#documentation-generation)
+- [Embedded Deployment](#embedded-deployment)
 - [Design Reference](#design-reference)
+- [Qt Licensing](#qt-licensing)
 - [Coding Standards](#coding-standards)
 - [Medical Device Considerations](#medical-device-considerations)
 - [License](#license)
@@ -139,20 +144,43 @@ MedicalProject/
 
 The application follows a controller-view architecture:
 
-```
- +---------------------+       +-------------------+
- |   QML Frontend      |       |   C++ Backend     |
- |                     |       |                   |
- |  Screens            |<----->|  Controllers      |
- |  Components         |       |    Ventilator     |
- |  Style Singletons   |       |    Alarm          |
- |                     |       |    Patient         |
- |  main.qml           |       |    Clock          |
- |   (Screen Router)   |       |                   |
- +---------------------+       |  Core             |
-                               |    AppSettings    |
-                               |    DatabaseManager|
-                               +-------------------+
+```mermaid
+flowchart LR
+    subgraph QML["QML HMI Layer"]
+        Root["main.qml\nLoader screen router"]
+        Header["Persistent header\nAlarm + status banners"]
+        Screens["Screens\nMonitoring, Controls, Patient, System"]
+        Components["Reusable controls\nCards, knobs, charts, navigation"]
+    end
+
+    subgraph Cpp["C++ Backend Layer"]
+        Vent["VentilatorController\nsimulation + validated command API"]
+        Patient["PatientController\nprofile + IBW calculations"]
+        Alarm["AlarmController\npriority + history model"]
+        User["UserController\noperator sessions"]
+        Clock["ClockController\nIndia real-time clock"]
+    end
+
+    subgraph Core["Persistence + Platform"]
+        Settings["AppSettings\nQSettings"]
+        Db["DatabaseManager\nSQLite async writer + audit hash chain"]
+        Future["Future hardware adapter\nserial/CAN/Ethernet"]
+    end
+
+    Root --> Header
+    Root --> Screens
+    Screens --> Components
+    Screens <--> Vent
+    Screens <--> Patient
+    Screens <--> Alarm
+    Screens <--> User
+    Header <--> Clock
+    Vent --> Db
+    Patient --> Db
+    Alarm --> Db
+    User --> Db
+    Settings --> Root
+    Future --> Vent
 ```
 
 **C++ controllers** are registered as QML context properties in main.cpp. Each
@@ -160,17 +188,24 @@ controller is a QObject subclass exposing Q_PROPERTY bindings and Q_INVOKABLE
 methods. QML components bind directly to controller properties for reactive
 updates.
 
-**Screen routing** is handled by a Loader in main.qml. The `currentScreen`
-property selects which Component to load. The bottom navigation bar and header
-remain persistent across all screens.
+**Screen routing** is handled by an asynchronous Loader in main.qml. The
+`currentScreen` property selects which Component to load. The bottom navigation
+bar, clinical alarm banner, and non-clinical system status banner remain
+persistent across all operating screens.
 
 **Style system** uses four QML singletons (Colors, Typography, Spacing, Radius)
 registered via qmldir. All visual properties should reference these singletons
 rather than using hardcoded values.
 
 **Data persistence** is split between QSettings (user preferences like
-brightness, volume, language) and SQLite (alarm history, ventilator snapshots).
-The DatabaseManager handles schema creation and versioning.
+brightness, volume, language) and SQLite (alarm history, ventilator snapshots,
+operator audit events, patient profile changes). DatabaseManager handles schema
+creation, compatibility migrations, asynchronous writes, and a tamper-evident
+event hash chain.
+
+**Build metadata** comes from qmake defines. CI should pass `APP_VERSION` and
+`BUILD_ID` environment variables before running qmake. Local builds default to
+`0.1.0-dev` and `local`.
 
 
 ## Screens
@@ -216,6 +251,13 @@ make -j$(nproc)
 
 # Run
 ./MedicalProject
+```
+
+To inject build metadata:
+
+```bash
+APP_VERSION=1.2.0 BUILD_ID="$GIT_COMMIT" qmake ../MedicalProject.pro
+make -j$(nproc)
 ```
 
 ### macOS
@@ -266,6 +308,15 @@ open docs/html/index.html
 ```
 
 
+## Embedded Deployment
+
+Deployment starter files are provided under `deploy/`:
+
+- `deploy/systemd/smart-ventilator-ui.service` for supervised embedded launch.
+- `deploy/yocto/smart-ventilator-ui.bb` as a Qt 6 Yocto recipe template.
+- `docs/EMBEDDED_DEPLOYMENT.md` for filesystem, watchdog, and runtime safety notes.
+
+
 ## Design Reference
 
 The UI design is based on the Smart Ventilator and Respiratory Monitoring UI
@@ -279,6 +330,13 @@ Key design principles from the reference:
 - Large touch targets for gloved-hand operation.
 - Clear visual hierarchy separating waveforms, vitals, and controls.
 - Color-coded severity levels for alarm states.
+
+
+## Qt Licensing
+
+Qt module and licensing considerations are tracked in `docs/QT_LICENSING_NOTES.md`.
+A closed medical embedded product should complete a formal Qt LGPL/commercial
+licensing review before release.
 
 
 ## Coding Standards

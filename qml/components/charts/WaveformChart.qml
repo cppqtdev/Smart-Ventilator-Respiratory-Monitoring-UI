@@ -19,8 +19,20 @@ Panel {
     property real cursorA: -1
     property real cursorB: -1
     property real displaySeconds: 8.1
+    property int maxFrameRate: 20
+    property double _lastPaintRequestMs: 0
 
     readonly property int maxSamples: 180
+
+    function schedulePaint() {
+        var now = Date.now()
+        if (root.frozen)
+            return
+        if (now - root._lastPaintRequestMs < 1000 / Math.max(1, root.maxFrameRate))
+            return
+        root._lastPaintRequestMs = now
+        chartCanvas.requestPaint()
+    }
 
     function valueAtCursor(cursorX) {
         if (!root.samples || root.samples.length === 0 || cursorX < 0)
@@ -405,7 +417,7 @@ Panel {
         }
     }
 
-    onSamplesChanged: chartCanvas.requestPaint()
+    onSamplesChanged: schedulePaint()
     onMinimumValueChanged: chartCanvas.requestPaint()
     onMaximumValueChanged: chartCanvas.requestPaint()
     onFrozenChanged: {

@@ -19,7 +19,12 @@ AppSettings::AppSettings(QObject *parent)
 
 QString AppSettings::softwareVersion() const
 {
-    return QStringLiteral("5.6b");
+    return QStringLiteral(APP_VERSION);
+}
+
+QString AppSettings::buildId() const
+{
+    return QStringLiteral(BUILD_ID);
 }
 
 double AppSettings::operatingHours() const

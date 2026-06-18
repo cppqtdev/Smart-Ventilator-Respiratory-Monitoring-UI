@@ -109,8 +109,25 @@ ApplicationWindow {
         contentItem: Loader {
             id: screenLoader
             active: !root.splashActive
+            asynchronous: true
             sourceComponent: navigateToScreen()
         }
+    }
+
+    SystemStatusBanner {
+        id: systemStatusBanner
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.leftMargin: Spacing.screenMargin
+        anchors.rightMargin: Spacing.screenMargin
+        anchors.topMargin: root.header && root.header.visible
+                           ? root.header.height + Spacing.screenMargin_8
+                           : Spacing.screenMargin_8
+        z: 900
+        visible: !root.splashActive && root.currentScreen !== "login" && active
+        databaseData: databaseManager
+        ventilatorData: ventilatorModel
     }
 
     footer: BottomNavigation {

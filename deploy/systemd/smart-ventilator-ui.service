@@ -1,0 +1,26 @@
+[Unit]
+Description=Smart Ventilator Qt HMI
+After=systemd-user-sessions.service local-fs.target
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+Environment=QT_QPA_PLATFORM=eglfs
+Environment=QT_QUICK_CONTROLS_STYLE=Basic
+Environment=QT_LOGGING_RULES=qt.qml.binding.removal.info=false
+ExecStart=/usr/bin/smart-ventilator-ui
+Restart=always
+RestartSec=2
+WatchdogSec=10
+RuntimeDirectory=smart-ventilator
+StateDirectory=smart-ventilator
+LogsDirectory=smart-ventilator
+ReadWritePaths=/var/lib/smart-ventilator /var/log/smart-ventilator
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

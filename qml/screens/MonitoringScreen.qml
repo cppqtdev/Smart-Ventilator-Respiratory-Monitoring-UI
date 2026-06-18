@@ -10,7 +10,6 @@ import QtQuick.Layouts
 import "../styles"
 import "../components/cards"
 import "../components/charts"
-import "../components/buttons"
 
 Control {
     id: root
@@ -71,85 +70,10 @@ Control {
         // with hardware driver reads. No QML changes required.
         spacing: Spacing.panelGap
 
-        Column {
+        MonitoringMetricSidebar {
             Layout.preferredWidth: parent.width * 0.22
             Layout.fillHeight: true
-
-            spacing: 12
-            property real tileHeight: (height - spacing * 6) / 7
-
-            MetricTile {
-                width: parent.width
-                height: parent.tileHeight
-                label: "Ppeak"
-                value: root.ventilatorData.ppeak
-                unit: "cmH2O"
-                highValue: root.ventilatorData.alarmHighPressure
-                lowValue: root.ventilatorData.alarmLowPressure
-                state: root.ventilatorData.ppeak
-                    > root.ventilatorData.alarmHighPressure
-                    ? "critical" : "normal"
-            }
-            MetricTile {
-                width: parent.width
-                height: parent.tileHeight
-                label: "ExpMinVol"
-                value: root.ventilatorData.expMinVol
-                unit: "L/min"
-                highValue: root.ventilatorData.alarmHighMv
-                lowValue: "1.0"
-                state: root.ventilatorData.expMinVol
-                    > root.ventilatorData.alarmHighMv
-                    ? "warning" : "normal"
-            }
-            MetricTile {
-                width: parent.width
-                height: parent.tileHeight
-                label: "VTE"
-                value: root.ventilatorData.vte
-                unit: "mL"
-                highValue: "839"
-                lowValue: root.ventilatorData.alarmLowVt
-                state: root.ventilatorData.vte
-                    < root.ventilatorData.alarmLowVt
-                    ? "warning" : "normal"
-            }
-            MetricTile {
-                width: parent.width
-                height: parent.tileHeight
-                label: "Ftotal"
-                value: root.ventilatorData.ftotal
-                unit: "b/min"
-                highValue: "40"
-                lowValue: "8"
-            }
-            MetricTile {
-                width: parent.width
-                height: parent.tileHeight
-                label: "RCexp"
-                value: root.ventilatorData.rcexp
-                unit: "s"
-                highValue: "5"
-                lowValue: "0"
-            }
-            MetricTile {
-                width: parent.width
-                height: parent.tileHeight
-                label: "PEEP"
-                value: root.ventilatorData.peep
-                unit: "cmH2O"
-            }
-            MetricTile {
-                width: parent.width
-                height: parent.tileHeight
-                label: "Minute Vol"
-                value: root.ventilatorData.minuteVolume
-                unit: "%"
-                highValue: root.ventilatorData.alarmHighMv * 10
-                state: root.ventilatorData.minuteVolume
-                    > root.ventilatorData.alarmHighMv * 10
-                    ? "critical" : "normal"
-            }
+            ventilatorData: root.ventilatorData
         }
 
         Panel {
@@ -430,67 +354,10 @@ Control {
             }
         }
 
-        Panel {
+        VentilatorControlRail {
             Layout.preferredWidth: parent.width * 0.215 - Spacing.panelGap * 2
             Layout.fillHeight: true
-            clip: true
-
-            Flickable {
-                id: monitoringKnobFlickable
-                anchors.fill: parent
-                contentWidth: width
-                contentHeight: knobColumn.height
-                clip: true
-                boundsBehavior: Flickable.StopAtBounds
-                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
-
-                Control {
-                    width: monitoringKnobFlickable.width
-                    padding: 24
-
-                    contentItem: Column {
-                        id: knobColumn
-                        spacing: 18
-
-                        PrefsTabButton {
-                            width: Math.min(170, parent.width)
-                            text: root.ventilatorData.frozen ? "Resume" : "Freeze"
-                            onClicked: root.ventilatorData.toggleFreeze()
-                        }
-                        PressureGroupBox {
-                            labelText: "Oxygen"
-                            value: root.ventilatorData.fio2
-                            unit: "%"
-                            onValueChangedByUser: function(newValue) {
-                                root.ventilatorData.fio2 = newValue
-                            }
-                        }
-                        PressureGroupBox {
-                            labelText: "PEEP C/PAP"
-                            value: root.ventilatorData.peep
-                            maximumValue: 30
-                            unit: "cmH2O"
-                            onValueChangedByUser: function(newValue) {
-                                root.ventilatorData.requestParameterChange("peep", newValue)
-                            }
-                        }
-                        PressureGroupBox {
-                            labelText: "%MinVol"
-                            value: root.ventilatorData.minuteVolume
-                            maximumValue: 400
-                            unit: "%"
-                            onValueChangedByUser: function(newValue) {
-                                root.ventilatorData.requestParameterChange("minuteVolume", newValue)
-                            }
-                        }
-
-                        Item {
-                            width: Math.min(170, parent.width)
-                            height: 5
-                        }
-                    }
-                }
-            }
+            ventilatorData: root.ventilatorData
         }
     }
 }

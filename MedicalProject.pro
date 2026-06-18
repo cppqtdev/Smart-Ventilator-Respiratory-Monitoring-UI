@@ -1,5 +1,11 @@
 QT += quick quickcontrols2 sql multimedia
 
+APP_VERSION = $$(APP_VERSION)
+isEmpty(APP_VERSION): APP_VERSION = 0.1.0-dev
+BUILD_ID = $$(BUILD_ID)
+isEmpty(BUILD_ID): BUILD_ID = local
+DEFINES += APP_VERSION=\\\"$${APP_VERSION}\\\" BUILD_ID=\\\"$${BUILD_ID}\\\"
+
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0

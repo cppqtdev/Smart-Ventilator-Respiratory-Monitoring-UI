@@ -13,6 +13,7 @@ class AppSettings : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString softwareVersion READ softwareVersion CONSTANT)
+    Q_PROPERTY(QString buildId READ buildId CONSTANT)
     Q_PROPERTY(double operatingHours READ operatingHours WRITE setOperatingHours NOTIFY operatingHoursChanged)
     Q_PROPERTY(int brightness READ brightness WRITE setBrightness NOTIFY brightnessChanged)
     Q_PROPERTY(int audioVolume READ audioVolume WRITE setAudioVolume NOTIFY audioVolumeChanged)
@@ -28,6 +29,8 @@ public:
 
     /** @return Application software version string. */
     QString softwareVersion() const;
+    /** @return CI/build identifier compiled into the application. */
+    QString buildId() const;
     /** @return Accumulated device operating hours. */
     double operatingHours() const;
     /** @return Display brightness level (0-100). */
