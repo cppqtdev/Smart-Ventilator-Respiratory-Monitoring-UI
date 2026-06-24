@@ -379,6 +379,280 @@ including but not limited to:
 See docs/PROJECT_STATUS.md for the current compliance gap analysis and
 implementation roadmap.
 
+## Smart Ventilator Project Screens
+
+The `public/smart-ventilator` folder contains the complete ICU Smart Ventilator UI screen set. This project is a Qt/QML clinical HMI concept for a bedside ventilator: it covers startup checks, secure operator access, patient setup, live waveform monitoring, alarms, trends, therapy tools, weaning support, clinical records, export, maintenance, and device settings.
+
+The design is built around a simple idea: an ICU operator should always know what mode the device is in, who the patient is, what alarm is active, and where to go next. Critical actions stay visible in the header, while the bottom navigation keeps the main workflows predictable.
+
+Project demo video: [Smart ICU Ventilator UI on YouTube](https://www.youtube.com/watch?v=Ozvt5mGjdJA)
+
+### 1. Boot Self-Check
+
+![Boot Self-Check](/smart-ventilator/1.png)
+
+The ventilator opens with a branded startup screen for Alsons Technology. It shows sensor-check progress, software version, and total operating hours, which makes the device feel like a real embedded medical system rather than a simple mock screen.
+
+### 2. Operator Login
+
+![Operator Login](/smart-ventilator/2.png)
+
+The login screen keeps the operator focused on authentication. The username field, PIN indicators, numeric keypad, clear button, and OK button are large enough for a touch interface and avoid unnecessary distractions.
+
+### 3. Filled Login State
+
+![Filled Login State](/smart-ventilator/3.png)
+
+This screen shows the entered operator name and filled PIN dots. It confirms the login interaction state clearly before the operator submits credentials.
+
+### 4. Standby And Patient Start
+
+![Standby And Patient Start](/smart-ventilator/4.png)
+
+The standby screen clearly warns that no ventilation is being delivered. From here the operator can select neonatal/adult profiles, choose gender, set patient height, run test and calibration, and start ventilation. Oxygen, PEEP/CPAP, and minute-volume target controls stay available on the right.
+
+### 5. Patient Profile Configuration
+
+![Patient Profile Configuration](/smart-ventilator/5.png)
+
+This screen turns patient data into suggested settings. Age, height, weight, patient category, and gender update predicted body weight, tidal volume, and respiratory rate so the operator can review a sensible starting point before continuing.
+
+### 6. Live Monitoring With High-Pressure Alarm
+
+![Live Monitoring With High-Pressure Alarm](/smart-ventilator/6.png)
+
+The main monitoring view combines live pressure, flow, volume, and PCO2 curves with measured values on the left. A high-pressure alarm is visible at the top, while quick adjustments remain available on the right.
+
+### 7. Driving Pressure Warning
+
+![Driving Pressure Warning](/smart-ventilator/7.png)
+
+This state shows a high driving pressure alert with a practical warning: reduce tidal volume or increase PEEP. The UI does more than flash an alarm; it gives the operator a useful next thought.
+
+### 8. Basic Ventilation Controls
+
+![Basic Ventilation Controls](/smart-ventilator/8.png)
+
+The basic controls tab groups the most common ventilation parameters: FiO2, PEEP, pressure support, respiratory rate, trigger, tidal volume, and minute-volume target. Circular controls and plus/minus actions make touch adjustment straightforward.
+
+### 9. Patient Controls
+
+![Patient Controls](/smart-ventilator/9.png)
+
+The patient controls screen lets the operator review ventilation time, patient height, gender, and ideal body weight. The save profile action keeps patient-specific values tied to the current ventilation session.
+
+### 10. Advanced Controls
+
+![Advanced Controls](/smart-ventilator/10.png)
+
+Advanced settings are separated from the everyday controls. Ramp, oxygen, pressure limit, PEEP/CPAP, ETS, and minute-volume target can be tuned without crowding the monitoring screen.
+
+### 11. Alarm Limit Controls
+
+![Alarm Limit Controls](/smart-ventilator/11.png)
+
+Alarm thresholds are grouped in one place: high pressure, low pressure, apnea time, low tidal volume, high minute volume, and low SpO2. This makes safety configuration easy to review before and during therapy.
+
+### 12. Apnea Backup Ventilation
+
+![Apnea Backup Ventilation](/smart-ventilator/12.png)
+
+Apnea backup is treated as its own safety workflow. The operator can turn backup on, see the selected mode, and configure backup rate, backup tidal volume, and backup PEEP.
+
+### 13. One-Hour Trends
+
+![One-Hour Trends](/smart-ventilator/13.png)
+
+The trends page gives a compact one-hour history for Ppeak, SpO2, EtCO2, FiO2, PEEP, and static compliance. It is designed for quick bedside review.
+
+### 14. Six-Hour Trends
+
+![Six-Hour Trends](/smart-ventilator/14.png)
+
+The six-hour view helps operators see how settings and patient response changed over a longer shift window.
+
+### 15. Twenty-Four-Hour Trends
+
+![Twenty-Four-Hour Trends](/smart-ventilator/15.png)
+
+The 24-hour trend view supports handover and retrospective review. The latest value stays visible for each chart, so long-term context does not hide the current state.
+
+### 16. Respiratory Loops
+
+![Respiratory Loops](/smart-ventilator/16.png)
+
+Respiratory loops show pressure-volume and flow-volume behavior in real time. The freeze button lets a clinician pause the curves for closer inspection.
+
+### 17. Clinical Admission Record
+
+![Clinical Admission Record](/smart-ventilator/17.png)
+
+The clinical section starts with patient admission data: patient ID, bed number, physician, and admit date. Admit/update and discharge actions are clearly separated.
+
+### 18. Therapy Controls
+
+![Therapy Controls](/smart-ventilator/18.png)
+
+Therapy controls include the heated humidifier and nebulizer. The screen shows target and actual humidifier temperature, water level, medication name, and nebulizer duration.
+
+### 19. Weaning Readiness
+
+![Weaning Readiness](/smart-ventilator/19.png)
+
+The weaning screen brings together RSBI, SpO2, PEEP, FiO2, work of breathing, stress index, dead-space ratio, and oxygen time. It also gives a clear start action for a supervised breathing trial.
+
+### 20. Respiratory Maneuvers
+
+![Respiratory Maneuvers](/smart-ventilator/20.png)
+
+Inspiratory hold and expiratory hold are presented as clinical maneuvers with a history log. This helps make plateau pressure and auto-PEEP checks traceable.
+
+### 21. Clinical Data Export
+
+![Clinical Data Export](/smart-ventilator/21.png)
+
+The export screen supports parameter snapshots and audit-event export. This is useful for clinical handover, technical review, and offline reporting.
+
+### 22. Clinical Reference
+
+![Clinical Reference](/smart-ventilator/22.png)
+
+The reference area keeps clinical guidance close to the operator workflow, reducing the need to leave the ventilator interface for common reference checks.
+
+### 23. Network Status
+
+![Network Status](/smart-ventilator/23.png)
+
+Network status is separated from ventilation controls. That makes connectivity and communication checks available without adding risk to active therapy settings.
+
+### 24. Maintenance Overview
+
+![Maintenance Overview](/smart-ventilator/24.png)
+
+Maintenance screens keep service and device-health workflows away from bedside controls, while still keeping the current mode and alarm context visible.
+
+### 25. Central Monitoring
+
+![Central Monitoring](/smart-ventilator/25.png)
+
+Central monitoring supports a broader ICU workflow where ventilator status may need to be reviewed beyond the local device screen.
+
+### 26. System Status
+
+![System Status](/smart-ventilator/26.png)
+
+The system section presents device status information such as power, battery, runtime, and network readiness in one place.
+
+### 27. Battery And Network Detail
+
+![Battery And Network Detail](/smart-ventilator/27.png)
+
+Battery and network indicators are kept visible because they affect whether the ventilator can continue operating reliably.
+
+### 28. Layout Configuration
+
+![Layout Configuration](/smart-ventilator/28.png)
+
+The layout screen supports different monitoring arrangements while preserving the same global navigation and header structure.
+
+### 29. Target Settings
+
+![Target Settings](/smart-ventilator/29.png)
+
+Target settings centralize goal-based ventilation values so the operator can tune therapy without jumping through unrelated menus.
+
+### 30. Alarm History
+
+![Alarm History](/smart-ventilator/30.png)
+
+Alarm history helps staff understand recent events before the current state. This is especially useful during shift changes and post-event review.
+
+### 31. Tools Overview
+
+![Tools Overview](/smart-ventilator/31.png)
+
+Tools collect setup, checks, and troubleshooting actions in a dedicated area so normal monitoring remains clean.
+
+### 32. Ventilation Modes
+
+![Ventilation Modes](/smart-ventilator/32.png)
+
+The modes screen lets the operator review and select ventilation strategies inside the same interface system used during active therapy.
+
+### 33. Settings Overview
+
+![Settings Overview](/smart-ventilator/33.png)
+
+Settings collect device-level configuration and preferences without mixing them into clinical parameter screens.
+
+### 34. Mode Change Confirmation
+
+![Mode Change Confirmation](/smart-ventilator/34.png)
+
+Mode changes are high-impact actions, so the interface uses confirmation states to reduce accidental changes.
+
+### 35. Emergency Control State
+
+![Emergency Control State](/smart-ventilator/35.png)
+
+The emergency action stays prominent in the top bar. This screen shows how the interface keeps critical actions reachable during abnormal conditions.
+
+### 36. Power-Off Confirmation
+
+![Power-Off Confirmation](/smart-ventilator/36.png)
+
+Power-off is handled as a deliberate action instead of a casual button press, which is important in a clinical device.
+
+### 37. Frozen Waveform Review
+
+![Frozen Waveform Review](/smart-ventilator/37.png)
+
+Freeze mode lets clinicians pause waveform movement and inspect the latest pressure, flow, volume, and CO2 behavior.
+
+### 38. Resumed Waveform Monitoring
+
+![Resumed Waveform Monitoring](/smart-ventilator/38.png)
+
+The resume state returns the operator to live monitoring while preserving the same values, alarm context, and quick controls.
+
+### 39. Alarm Muted State
+
+![Alarm Muted State](/smart-ventilator/39.png)
+
+Muted or acknowledged alarm states still keep the warning visible, which helps reduce alarm fatigue without hiding risk.
+
+### 40. Patient Category Switching
+
+![Patient Category Switching](/smart-ventilator/40.png)
+
+Adult, pediatric, and neonatal patient choices are shown as clear segmented actions so the UI can adapt suggested values to the patient group.
+
+### 41. Test And Calibration Flow
+
+![Test And Calibration Flow](/smart-ventilator/41.png)
+
+The test and calibration entry point sits close to standby operation, which is where operators need setup checks before ventilation begins.
+
+### 42. Suggested Settings Review
+
+![Suggested Settings Review](/smart-ventilator/42.png)
+
+Suggested values are shown before the operator continues to modes, making the relationship between patient inputs and starting parameters easy to review.
+
+### 43. High-Pressure Recovery
+
+![High-Pressure Recovery](/smart-ventilator/43.png)
+
+Recovery states keep alarm language beside live waveform feedback, helping operators judge whether a setting change is improving the situation.
+
+### 44. Service Workflow
+
+![Service Workflow](/smart-ventilator/44.png)
+
+Service-focused screens are discoverable but still preserve the clinical header, alarm state, and device identity.
+
+### 45. Complete Operator Console
+
 
 ## License
 
